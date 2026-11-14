@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8"><title>twinyard – propozycja listy</title>
+<style>
+  body { margin: 0; padding: 16px; background: #181818; color: #ccc; font: 13px "Segoe UI Variable Text","Segoe UI",sans-serif; }
+  h2 { font-size: 14px; font-weight: 600; margin: 0 0 6px; color: #ddd; }
+  .wrap { display: flex; gap: 24px; align-items: flex-start; flex-wrap: wrap; }
+  .panel { width: 420px; border: 1px solid #3c3c3c; }
+  .row { display: grid; grid-template-columns: 1fr 50px 70px; height: 22px; align-items: center; cursor: default; }
+  .row > span { padding: 0 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .nm { display: flex; align-items: center; gap: 6px; }
+  .ic { width: 16px; height: 16px; flex: none; }
+  .r { text-align: right; }
+  /* --- current --- */
+  .cur { background: #1f1f1f; color: #cccccc; }
+  .cur .row .e, .cur .row .r { color: #9d9d9d; font-size: 12px; }
+  .cur .row.dir .nm span { font-weight: 600; }
+  .cur .row.cursor { background: #45484d; color: #fff; }
+  .cur svg.line { fill: none; stroke: currentColor; stroke-width: 1.2; }
+  /* --- proposed --- */
+  .new { background: #272822; color: #c0c0c0; }
+  .new .row .e, .new .row .r { color: #8f8f88; font-size: 12px; }
+  .new .row.dir .nm span { color: #f8c77e; font-weight: 600; }
+  .new .row:hover { background: #31322b; }
+  .new .row.cursor { background: #49483e; color: #f0f0f0; }
+  .new .row.cursor .e, .new .row.cursor .r { color: #d0d0c8; }
+  .new .row.marked, .new .row.marked .e, .new .row.marked .r { color: #f48771; }
+  /* --- proposal 3: same as 2, neutral background --- */
+  .neu { background: #252525; color: #c0c0c0; }
+  .neu .row .e, .neu .row .r { color: #8c8c8c; font-size: 12px; }
+  .neu .row.dir .nm span { color: #f8c77e; font-weight: 600; }
+  .neu .row:hover { background: #2d2e30; }
+  .neu .row.cursor { background: #45474b; color: #f0f0f0; }
+  .neu .row.cursor .e, .neu .row.cursor .r { color: #d0d0d0; }
+  .neu .row.marked, .neu .row.marked .e, .neu .row.marked .r { color: #f48771; }
+  .panel { width: 360px; }
+  .zoom { zoom: 2; }
+  .note { max-width: 880px; color: #aaa; line-height: 1.5; }
+</style></head><body>
+<div class="wrap" id="out"></div>
+<p class="note">Obecnie = stary wygląd; 2 = tło #272822 jak w TC; 3 = tło #252525 (WDROŻONA, 2026-11-13); tekst #c0c0c0, foldery #f8c77e. Kursor na „logo.png”, zaznaczony „cron”.</p>
+<h2>Same ikony ×2</h2>
+<div class="zoom" id="z"></div>
+<script>
+const files = ["[_dark]","[_dev]","[backup]","[ENV]","[szkolenia]",".htaccess","1916.png","photo_2024.jpg","manual.pdf","logo.png","banner.webp","site_backup.sql","Backlog.xlsx","Oferta.docx","Prezentacja.pptx","cron.php","details.js","style.css","index.html","config.json","settings.ini","exception.log","notes.txt","backup.zip","dump.7z","setup.exe","deploy.bat","run.ps1","film.mp4","song.mp3","data.sqlite","Inter.ttf","disk.vhdx","README"];
+
+/* ---------- current icons (copied from fileIcons.ts) ---------- */
+const EXT={};const add=(k,l)=>l.split(" ").forEach(e=>EXT[e]=k);
+add("code","php phtml inc js mjs cjs ts tsx jsx vue svelte py rb pl java kt cs c h cpp hpp cc rs go swift dart lua r scala sql");
+add("web","html htm xhtml twig tpl blade");add("style","css scss sass less styl");
+add("archive","zip 7z rar tar gz tgz bz2 xz zst cab iso jar war apk");
+add("image","png jpg jpeg gif webp bmp ico svg avif heic tif tiff psd ai eps raw cr2 nef");
+add("video","mp4 mkv avi mov wmv webm m4v mpg mpeg flv 3gp");add("audio","mp3 wav flac ogg m4a aac wma opus mid midi");
+add("text","txt md log rtf nfo srt readme");add("pdf","pdf");add("doc","doc docx odt pages");
+add("sheet","xls xlsx xlsm ods csv tsv numbers");add("slides","ppt pptx odp key");add("exe","exe msi com scr appx msix");
+add("script","bat cmd ps1 psm1 sh vbs reg");add("config","json xml yaml yml toml ini cfg conf config env properties htaccess lock editorconfig gitignore");
+add("db","db sqlite sqlite3 mdb accdb dbf bak");add("font","ttf otf woff woff2 eot fon");add("disk","vhd vhdx vmdk img dmg");
+const extOf=n=>{const d=n.lastIndexOf(".");return d>=0?n.slice(d+1).toLowerCase():""};
+const kind=n=>EXT[extOf(n)]??"file";
+const PAGE="M3.5 1.5h6l3 3v10h-9zM9.5 1.5v3h3";
+const OLD={file:[PAGE,"#9d9d9d"],code:[PAGE+"M6.5 8 5 9.5 6.5 11M9.5 8 11 9.5 9.5 11","#4f8fe6"],web:["M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zM1.5 8h13M8 1.5c2 2 2 11 0 13M8 1.5c-2 2-2 11 0 13","#e8803a"],style:[PAGE+"M6 8.5h4M6 10.5h3M6 12.5h4","#9a6ce8"],archive:["M2.5 4.5h11v9h-11zM2 2.5h12v2H2zM8 6v1M8 8v1M8 10v1M7 12h2","#c9962b"],image:["M1.5 3h13v10h-13zM1.5 11l4-4 3 3 2-2 4 4M10.5 5.5a1 1 0 1 0 0 .1","#3fa35b"],video:["M1.5 3.5h13v9h-13zM6.5 6v4l3.5-2z","#b04fd6"],audio:["M6 12V3.5l7-1.5V10.5M6 12a1.8 1.8 0 1 1-3.6 0 1.8 1.8 0 0 1 3.6 0zM13 10.5a1.8 1.8 0 1 1-3.6 0 1.8 1.8 0 0 1 3.6 0z","#e2558f"],text:[PAGE+"M5.5 7.5h5M5.5 9.5h5M5.5 11.5h3","#9d9d9d"],pdf:[PAGE+"M5 9h6v3.5H5z","#e0453a"],doc:[PAGE+"M5 7.5l1 4 1.5-3 1.5 3 1-4","#3b6fd4"],sheet:[PAGE+"M5 7h6v5.5H5zM5 9h6M5 11h6M8 7v5.5","#2f9b56"],slides:[PAGE+"M5 7.5h6v4H5zM8 11.5v1.5","#d9662c"],exe:["M1.5 2.5h13v11h-13zM1.5 5h13M4 7.5l2 1.5-2 1.5M7.5 11h3","#2aa3a3"],script:[PAGE+"M5.5 8l1.5 1.5L5.5 11M8 11.5h2.5","#7a8a3a"],config:[PAGE+"M6.5 7.5c-1 0-1 .5-1 1.25S5 10 4.5 10c.5 0 1 .5 1 1.25s0 1.25 1 1.25M9.5 7.5c1 0 1 .5 1 1.25s.5 1.25 1 1.25c-.5 0-1 .5-1 1.25s0 1.25-1 1.25","#d18a1f"],db:["M3 3.5c0-1.1 2.2-2 5-2s5 .9 5 2v9c0 1.1-2.2 2-5 2s-5-.9-5-2zM3 3.5c0 1.1 2.2 2 5 2s5-.9 5-2M3 8c0 1.1 2.2 2 5 2s5-.9 5-2","#c9a227"],font:[PAGE+"M5.5 12.5 8 6.5l2.5 6M6.5 10.5h3","#8c7b6b"],disk:["M2 4.5h12v7H2zM4 9.5h2M11.5 9.5h.5","#7c8794"]};
+const oldIcon=(n,dir)=>dir?`<svg class="ic line" viewBox="0 0 16 16" style="color:#d7ba7d"><path fill="#5c4a24" d="M1.5 3.5h4l1.5 1.5h7.5v8h-13z"/></svg>`
+  :`<svg class="ic line" viewBox="0 0 16 16" style="color:${OLD[kind(n)][1]}"><path d="${OLD[kind(n)][0]}"/></svg>`;
+
+/* ---------- proposed: filled, muted, with a type badge ---------- */
+const PG="#cfcfc8", PGD="#9e9e96";             // page body / folded corner (dark theme)
+const page=`<path fill="${PG}" d="M3 1h6.5L13 4.5V15H3z"/><path fill="${PGD}" d="M9.5 1v3.5H13z"/>`;
+const badge=(c,t,fs)=>`<rect x="1" y="8.5" width="12.5" height="6" rx="1" fill="${c}"/><text x="7.25" y="13.3" fill="#fff" font-family="Segoe UI,Arial" font-weight="700" font-size="${fs}" text-anchor="middle" letter-spacing="-.2">${t}</text>`;
+const lines=`<path stroke="#7d7d76" stroke-width="1" d="M5 6.5h6M5 8.5h6M5 10.5h6M5 12.5h4"/>`;
+const BADGE={pdf:["#b8463c","PDF"],doc:["#3e6fb6","W"],sheet:["#2f7d4f","X"],slides:["#c25a2e","P"],
+  code:["#4c79ad",null],web:["#c0703a",null],style:["#7b62ad",null],config:["#8a7a52",null],script:["#6b7d3a",null],font:["#7f6f62","Aa"]};
+function newIcon(n,dir){
+  const s=b=>`<svg class="ic" viewBox="0 0 16 16">${b}</svg>`;
+  if(dir) return s(`<path fill="#d9a63c" d="M1 3h5l1.5 1.5H15V14H1z"/><path fill="#f5cd62" d="M1 6h14v8H1z"/>`);
+  const k=kind(n), e=extOf(n).toUpperCase();
+  if(BADGE[k]){ let [c,t]=BADGE[k]; if(!t) t=e.length<=3?e:e.slice(0,3); const fs=t.length===1?6.6:t.length===2?5.6:4.8; return s(page+badge(c,t,fs)); }
+  switch(k){
+    case "image": return s(`<rect x="1" y="2.5" width="14" height="11" rx="1" fill="#d6dcd2"/><path fill="#5e9461" d="M1 13.5V11l4-4 3.5 3.5 2-2L15 13v.5z"/><circle cx="11" cy="5.5" r="1.4" fill="#d1a83f"/>`);
+    case "video": return s(`<rect x="1" y="3" width="14" height="10" rx="1.5" fill="#76619e"/><path fill="#fff" d="M6.5 5.5v5l4-2.5z"/>`);
+    case "audio": return s(`<path fill="#b0668a" d="M6 3.5 13.5 2v9a2 2 0 1 1-1.5-1.94V5L7.5 6v6.5a2 2 0 1 1-1.5-1.94z"/>`);
+    case "archive": return s(`<rect x="1.5" y="4" width="13" height="10.5" rx="1" fill="#a9844a"/><rect x="1" y="1.5" width="14" height="3.5" rx="1" fill="#c9a466"/><path fill="#5a4320" d="M7 5h2v1H7zM7 7h2v1H7zM7 9h2v1H7zM6.5 11h3v2h-3z"/>`);
+    case "exe": return s(`<rect x="1" y="2" width="14" height="12" rx="1.2" fill="#d4d7dc"/><path fill="#4a76b3" d="M1 3.2C1 2.5 1.5 2 2.2 2h11.6c.7 0 1.2.5 1.2 1.2V5H1z"/>`);
+    case "db": return s(`<path fill="#a98d3f" d="M2.5 3.5v9c0 1.2 2.5 2 5.5 2s5.5-.8 5.5-2v-9z"/><ellipse cx="8" cy="3.5" rx="5.5" ry="2" fill="#d4b763"/><path fill="none" stroke="#d4b763" stroke-width=".8" d="M2.5 8c0 1.2 2.5 2 5.5 2s5.5-.8 5.5-2"/>`);
+    case "disk": return s(`<rect x="1.5" y="4" width="13" height="8" rx="1.5" fill="#8a929c"/><path fill="#cfd5db" d="M3.5 9h3v1h-3z"/><circle cx="12" cy="9.5" r=".8" fill="#9fe08a"/>`);
+    case "text": return s(page+lines);
+    default: return s(page);
+  }
+}
+function list(cls,title,ico){
+  let h=`<div><h2>${title}</h2><div class="panel ${cls}">`;
+  for(const f of files){const dir=f.startsWith("[");const n=dir?f.slice(1,-1):f;const d=n.lastIndexOf(".");
+    const stem=dir||d<=0?n:n.slice(0,d), ext=dir||d<=0?"":n.slice(d+1);
+    const c=(n==="logo.png"?" cursor":"")+(n==="cron.php"?" marked":"")+(dir?" dir":"");
+    h+=`<div class="row${c}"><span class="nm">${ico(n,dir)}<span>${stem}</span></span><span class="e">${ext}</span><span class="r">${dir?"&lt;DIR&gt;":"12 345"}</span></div>`;}
+  return h+"</div></div>";
+}
+out.innerHTML=list("cur","Obecnie",oldIcon)+list("new","Propozycja 2 (ciepła)",newIcon)+list("neu","Propozycja 3 (neutralna)",newIcon);
+z.innerHTML=`<div class="panel new" style="width:auto;display:flex;flex-wrap:wrap;gap:6px;padding:6px">`+files.map(f=>newIcon(f,f.startsWith("["))).join("")+"</div>";
+</script></body></html>

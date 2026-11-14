@@ -1,0 +1,135 @@
+:root {
+  color-scheme: light dark;
+  font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  font-size: 13px;
+
+  /* light */
+  --bg: #eef0f3;
+  --panel-bg: #ffffff;
+  --path-bg: #f4f5f7;
+  --path-bg-active: #e6edfb;
+  --fg: #1d2129;
+  --fg-dim: #6a7280;
+  --border: #dde1e7;
+  --border-strong: #b9c0cb;
+  --hover: #f1f4f8;
+  --accent: #2563eb;
+  --cursor: #2563eb;
+  --cursor-fg: #ffffff;
+  --cursor-inactive: #e3e7ee;
+  --mark: #d1342f;
+  --mark-on-cursor: #ffd6d4;
+  /* file list (proposal 3, see docs/design/file-list-preview.html) */
+  --list-bg: #ffffff;
+  --list-fg: #1d2129;
+  --list-dim: #6a7280;
+  --list-dir: #8a5a00;
+  --list-hover: #f1f4f8;
+  --icon-page: #e3e6ea;
+  --icon-fold: #b5bbc4;
+  --icon-lines: #8a919c;
+  --folder-back: #d9a63c;
+  --folder-front: #f5cd62;
+  --danger: #c62828;
+  --overlay-bg: #1d2129;
+  --overlay-fg: #ffffff;
+}
+
+/* dark: neutral greys like VS Code (Dark Modern); blue only as a muted accent */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #181818;
+    --panel-bg: #1f1f1f;
+    --path-bg: #232323;
+    --path-bg-active: #2d2e30;
+    --fg: #cccccc;
+    --fg-dim: #9d9d9d;
+    --border: #2b2b2b;
+    --border-strong: #3c3c3c;
+    --hover: #2a2d2e;
+    --accent: #5b88b9;
+    --cursor: #45484d;
+    --cursor-fg: #ffffff;
+    --cursor-inactive: #2c2d30;
+    --mark: #f48771;
+    --mark-on-cursor: #ffc9c4;
+    --list-bg: #252525;
+    --list-fg: #c0c0c0;
+    --list-dim: #8c8c8c;
+    --list-dir: #f8c77e;
+    --list-hover: #2d2e30;
+    --icon-page: #cfcfcf;
+    --icon-fold: #9e9e9e;
+    --icon-lines: #7d7d7d;
+    --folder-back: #d9a63c;
+    --folder-front: #f5cd62;
+    --danger: #f14c4c;
+    --overlay-bg: #cccccc;
+    --overlay-fg: #1f1f1f;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #181818;
+  --panel-bg: #1f1f1f;
+  --path-bg: #232323;
+  --path-bg-active: #2d2e30;
+  --fg: #cccccc;
+  --fg-dim: #9d9d9d;
+  --border: #2b2b2b;
+  --border-strong: #3c3c3c;
+  --hover: #2a2d2e;
+  --accent: #5b88b9;
+  --cursor: #45484d;
+  --cursor-fg: #ffffff;
+  --cursor-inactive: #2c2d30;
+  --mark: #f48771;
+  --mark-on-cursor: #ffc9c4;
+  --list-bg: #252525;
+  --list-fg: #c0c0c0;
+  --list-dim: #8c8c8c;
+  --list-dir: #f8c77e;
+  --list-hover: #2d2e30;
+  --icon-page: #cfcfcf;
+  --icon-fold: #9e9e9e;
+  --icon-lines: #7d7d7d;
+  --folder-back: #d9a63c;
+  --folder-front: #f5cd62;
+  --danger: #f14c4c;
+  --overlay-bg: #cccccc;
+  --overlay-fg: #1f1f1f;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 5px;
+  border: 2px solid var(--panel-bg);
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}

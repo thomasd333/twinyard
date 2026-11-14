@@ -1,0 +1,20 @@
+[package]
+name = "twinyard-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+serde.workspace = true
+windows-sys = { workspace = true, features = ["Win32_System_Time", "Win32_UI_Shell", "Win32_UI_WindowsAndMessaging", "Win32_System_Registry", "Win32_NetworkManagement_NetManagement", "Win32_System_DataExchange", "Win32_System_Memory"] }
+trash = "5.3.0"
+zip = { version = "9.5.1", default-features = false, features = ["deflate-flate2-zlib-rs", "deflate64", "time", "aes-crypto"] }
+toml = "1.2.1"
+serde_json.workspace = true
+sevenz-rust2 = { version = "0.25.0", default-features = false, features = ["bzip2", "ppmd", "deflate", "aes256"] }
+unrar_sys = "0.5.8"
+tar = { version = "0.4", default-features = false }
+flate2 = { version = "1.1", default-features = false, features = ["zlib-rs"] }
+
+[dev-dependencies]
+sevenz-rust2 = { version = "0.25.0", default-features = false, features = ["compress", "util"] }

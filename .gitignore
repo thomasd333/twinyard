@@ -1,0 +1,15 @@
+# Prawdziwe pliki konfiguracyjne Total Commandera (zawierają hasła/certyfikaty) — NIGDY do repo
+wcx_ftp.ini
+wincmd.ini
+*.ini
+
+# Rust / Node / Tauri
+/target/
+node_modules/
+dist/
+app/src-tauri/target/
+app/src-tauri/gen/
+
+# Dane programu (portable: config, połączenia, hasła DPAPI, logi, WebView) — prywatne
+/data/
+/dist-portable/

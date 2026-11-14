@@ -1,0 +1,20 @@
+[package]
+name = "twinyard-remote"
+version = "0.9.0"
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+twinyard-core.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+windows-sys = { workspace = true, features = ["Win32_Security_Credentials", "Win32_Security_Cryptography"] }
+suppaftp = { version = "12.2.1", features = ["rustls-ring", "deprecated"] }
+rustls = { version = "0.23.46", default-features = false, features = ["ring", "std", "tls12", "logging"] }
+rustls-platform-verifier = "0.7.1"
+ring = "0.17.14"
+native-tls = "0.2.18"
+log = "0.4.35"
+
+[dev-dependencies]
+env_logger = "0.11"
