@@ -47,7 +47,7 @@
     <svg viewBox="0 0 16 16" aria-hidden="true" data-tauri-drag-region
       ><rect x="1.5" y="2.5" width="6" height="11" rx="1.5" class="l" /><rect x="8.5" y="2.5" width="6" height="11" rx="1.5" class="r" /></svg
     >
-    twinyard
+    Twinyard
   </span>
   <span class="subtitle" data-tauri-drag-region title={subtitle}>{subtitle}</span>
 

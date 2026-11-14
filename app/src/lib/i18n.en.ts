@@ -166,7 +166,7 @@ export const EN: Record<string, string> = {
     "The editor (F4), viewer (F3), diff tool (Ctrl+F2), the list of “text” extensions for search and the interface colours are in <b>config.toml</b> (changes apply at once).",
   "Kolory interfejsu. Usuń # przed wierszem i zmień wartość (dowolny kolor CSS: #rrggbb, rgb(), nazwa).":
     "Interface colours. Remove the # before a line and change the value (any CSS colour: #rrggbb, rgb(), a name).",
-  "Zmiany widać po powrocie do okna twinyard. Wiersze z # = wartość domyślna.": "Changes show when you switch back to the twinyard window. Lines with # = the default value.",
+  "Zmiany widać po powrocie do okna Twinyard. Wiersze z # = wartość domyślna.": "Changes show when you switch back to the Twinyard window. Lines with # = the default value.",
   "list-* = lista plików, icon-* / folder-* = ikony, cursor = kursor, mark = zaznaczone pliki.": "list-* = file list, icon-* / folder-* = icons, cursor = cursor, mark = marked files.",
   "config.toml: pominięte kolory (zła nazwa lub wartość): {0}": "config.toml: colours skipped (bad name or value): {0}",
   "Otwórz config.toml": "Open config.toml",

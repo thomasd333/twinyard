@@ -4,6 +4,8 @@ A fast, keyboard-driven, two-panel file manager for Windows, in the spirit of To
 Built with Rust, Tauri 2 and Svelte 5. Its focus is **FTP/FTPS that doesn't hang**, and file
 operations that never leave a file half-written.
 
+![Twinyard in dark mode: two panels with a web project on the left and holiday photos on the right](docs/screenshot-dark.png)
+
 > **Status: 0.9, beta.** The author uses it every day, but expect rough edges.
 > Windows 10/11 only (it uses Win32 APIs directly).
 

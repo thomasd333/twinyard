@@ -46,7 +46,7 @@ export function colorTemplate(): string {
   const block = (list: [string, string][]) => list.map(([n, v]) => `# ${n} = "${v}"`).join("\n");
   return (
     `# ${t("Kolory interfejsu. Usuń # przed wierszem i zmień wartość (dowolny kolor CSS: #rrggbb, rgb(), nazwa).")}\n` +
-    `# ${t("Zmiany widać po powrocie do okna twinyard. Wiersze z # = wartość domyślna.")}\n` +
+    `# ${t("Zmiany widać po powrocie do okna Twinyard. Wiersze z # = wartość domyślna.")}\n` +
     `# ${t("list-* = lista plików, icon-* / folder-* = ikony, cursor = kursor, mark = zaznaczone pliki.")}\n` +
     `[colors.light]\n${block(d.light)}\n\n[colors.dark]\n${block(d.dark)}\n`
   );
