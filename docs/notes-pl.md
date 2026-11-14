@@ -266,9 +266,9 @@ Aplikacja jest **w pełni portable**: wszystkie dane w `data\` obok `twinyard.ex
 nie dają się odszyfrować i program pyta ponownie), `logs\ftp.log`, `webview\` (profil WebView2:
 localStorage z zakładkami i motywem — przez `WEBVIEW2_USER_DATA_FOLDER` ustawiane w `main.rs`).
 Build deweloperski (`target\debug`) używa `<repo>\data\` (w `.gitignore`). Fallback na
-`%APPDATA%\twinyard` tylko gdy katalog exe jest tylko do odczytu. Stare dane z `%APPDATA%\twinyard`
-kopiowane raz przy pierwszym starcie; hasła z Menedżera poświadczeń przenoszone przy pierwszym
-odczycie. Testy: `TWINYARD_DATA` nadpisuje katalog. **Nie zapisywać niczego poza `data\`** (wyjątek:
+`%APPDATA%\Twinyard` tylko gdy katalog exe jest tylko do odczytu. (Migracje ze starych lokalizacji —
+`%APPDATA%\filecmd`, Menedżer poświadczeń, klucze localStorage `filecmd.` — usunięte 2026-11-14 przed
+publikacją 0.9.0.) Testy: `TWINYARD_DATA` nadpisuje katalog. **Nie zapisywać niczego poza `data\`** (wyjątek:
 `%TEMP%\twinyard` na kopie plików z FTP).
 
 ### Tryb zgodności TLS (SChannel)

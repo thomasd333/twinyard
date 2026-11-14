@@ -23,18 +23,6 @@ export async function loadUiState() {
   } catch {
     cache = {};
   }
-  // One-time migration from the old localStorage keys.
-  if (!Object.keys(cache).length) {
-    try {
-      for (let i = 0; i < localStorage.length; i++) {
-        const k = localStorage.key(i);
-        if (k?.startsWith("filecmd.")) cache[k.slice(8)] = localStorage.getItem(k) ?? "";
-      }
-      if (Object.keys(cache).length) void flush();
-    } catch {
-      /* no localStorage — fine */
-    }
-  }
   // Closing the window (button, Alt+F4) writes pending changes first.
   // (One handler only: each onCloseRequested listener closes the window by
   // itself unless *it* called preventDefault.)

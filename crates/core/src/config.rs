@@ -62,17 +62,17 @@ pub struct Tools {
 /// Portable: all data (config, favorites, connections, passwords, logs,
 /// WebView state) lives in `data\` next to twinyard.exe. A dev build
 /// (`…\target\debug\twinyard.exe`) uses `<repo>\data\` so `cargo clean`
-/// can't wipe it. Falls back to `%APPDATA%\filecmd` (the pre-portable location) only when the exe's
-/// folder is read-only. `TWINYARD_DATA` overrides (tests).
+/// can't wipe it. Falls back to `%APPDATA%\Twinyard` only when the exe's
+/// folder is read-only (e.g. under Program Files). `TWINYARD_DATA` overrides (tests).
 pub fn data_dir() -> PathBuf {
     if let Some(d) = std::env::var_os("TWINYARD_DATA") {
         return PathBuf::from(d);
     }
     static DIR: std::sync::OnceLock<PathBuf> = std::sync::OnceLock::new();
     DIR.get_or_init(|| {
-        let legacy = legacy_dir();
+        let fallback = || std::env::var_os("APPDATA").map(PathBuf::from).unwrap_or_else(|| PathBuf::from(".")).join("Twinyard");
         let Some(mut base) = std::env::current_exe().ok().and_then(|p| p.parent().map(Path::to_path_buf)) else {
-            return legacy;
+            return fallback();
         };
         let lower = base.to_string_lossy().to_lowercase();
         if lower.ends_with(r"\target\debug") || lower.ends_with(r"\target\release") {
@@ -80,21 +80,12 @@ pub fn data_dir() -> PathBuf {
             base.pop();
         }
         let dir = base.join("data");
-        let fresh = !dir.exists();
         if std::fs::create_dir_all(&dir).is_err() || !writable(&dir) {
-            return legacy;
-        }
-        if fresh {
-            migrate(&legacy, &dir);
+            return fallback();
         }
         dir
     })
     .clone()
-}
-
-/// Where versions before the portable layout kept their data.
-pub fn legacy_dir() -> PathBuf {
-    std::env::var_os("APPDATA").map(PathBuf::from).unwrap_or_else(|| PathBuf::from(".")).join("filecmd")
 }
 
 fn writable(dir: &Path) -> bool {
@@ -102,16 +93,6 @@ fn writable(dir: &Path) -> bool {
     let ok = std::fs::write(&probe, b"").is_ok();
     let _ = std::fs::remove_file(&probe);
     ok
-}
-
-/// One-time copy of data from the old `%APPDATA%\filecmd` location (the app's former name).
-fn migrate(from: &Path, to: &Path) {
-    for name in ["config.toml", "favorites.json", "connections.json"] {
-        let (a, b) = (from.join(name), to.join(name));
-        if a.exists() && !b.exists() {
-            let _ = std::fs::copy(&a, &b);
-        }
-    }
 }
 
 pub fn config_path() -> PathBuf {

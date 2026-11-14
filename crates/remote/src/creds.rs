@@ -2,15 +2,12 @@
 //! Windows DPAPI (CryptProtectData, bound to the current Windows user).
 //! Portable on purpose: the file travels with the app; on another PC/account
 //! it cannot be decrypted and twinyard simply asks for the password again.
-//! Entries from earlier versions (Windows Credential Manager,
-//! `filecmd:ftp:<id>`) are moved here on first read.
 
 use std::collections::BTreeMap;
 use std::io;
 use std::path::PathBuf;
 use std::ptr;
-use windows_sys::Win32::Foundation::{ERROR_NOT_FOUND, GetLastError, LocalFree};
-use windows_sys::Win32::Security::Credentials::{CRED_TYPE_GENERIC, CREDENTIALW, CredDeleteW, CredFree, CredReadW};
+use windows_sys::Win32::Foundation::LocalFree;
 use windows_sys::Win32::Security::Cryptography::{CRYPT_INTEGER_BLOB, CRYPTPROTECT_UI_FORBIDDEN, CryptProtectData, CryptUnprotectData};
 
 fn store_path() -> PathBuf {
@@ -64,16 +61,9 @@ fn dpapi(data: &[u8], protect: bool) -> io::Result<Vec<u8>> {
 }
 
 pub fn get(id: &str) -> Option<String> {
-    if let Some(enc) = load().ok().and_then(|m| m.get(id).cloned()) {
-        let plain = dpapi(&unhex(&enc)?, false).ok()?; // other PC/user: None -> ask again
-        return String::from_utf8(plain).ok();
-    }
-    // Migrate from the Credential Manager (versions before portable data).
-    let p = legacy::get(id)?;
-    if set(id, "", &p).is_ok() {
-        let _ = legacy::delete(id);
-    }
-    Some(p)
+    let enc = load().ok()?.remove(id)?;
+    let plain = dpapi(&unhex(&enc)?, false).ok()?; // other PC/user: None -> ask again
+    String::from_utf8(plain).ok()
 }
 
 pub fn set(id: &str, _user: &str, password: &str) -> io::Result<()> {
@@ -88,73 +78,13 @@ pub fn delete(id: &str) -> io::Result<()> {
     if map.remove(id).is_some() {
         save(&map)?;
     }
-    legacy::delete(id)
-}
-
-/// The Windows Credential Manager store used before the portable layout.
-mod legacy {
-    use super::*;
-
-    fn target(id: &str) -> Vec<u16> {
-        format!("filecmd:ftp:{id}").encode_utf16().chain(std::iter::once(0)).collect()
-    }
-
-    pub fn get(id: &str) -> Option<String> {
-        let t = target(id);
-        let mut cred: *mut CREDENTIALW = ptr::null_mut();
-        // SAFETY: valid NUL-terminated target; `cred` freed with CredFree.
-        unsafe {
-            if CredReadW(t.as_ptr(), CRED_TYPE_GENERIC, 0, &mut cred) == 0 {
-                return None;
-            }
-            let c = &*cred;
-            let bytes = std::slice::from_raw_parts(c.CredentialBlob, c.CredentialBlobSize as usize);
-            let units: Vec<u16> = bytes.chunks_exact(2).map(|b| u16::from_le_bytes([b[0], b[1]])).collect();
-            CredFree(cred as *const _);
-            String::from_utf16(&units).ok()
-        }
-    }
-
-    pub fn delete(id: &str) -> io::Result<()> {
-        let t = target(id);
-        // SAFETY: valid NUL-terminated target.
-        unsafe {
-            if CredDeleteW(t.as_ptr(), CRED_TYPE_GENERIC, 0) == 0 && GetLastError() != ERROR_NOT_FOUND {
-                return Err(io::Error::last_os_error());
-            }
-        }
-        Ok(())
-    }
-
-    #[cfg(test)]
-    pub fn set(id: &str, password: &str) {
-        use windows_sys::Win32::Foundation::FILETIME;
-        use windows_sys::Win32::Security::Credentials::{CRED_PERSIST_LOCAL_MACHINE, CredWriteW};
-        let mut t = target(id);
-        let blob: Vec<u8> = password.encode_utf16().flat_map(|c| c.to_le_bytes()).collect();
-        let cred = CREDENTIALW {
-            Flags: 0,
-            Type: CRED_TYPE_GENERIC,
-            TargetName: t.as_mut_ptr(),
-            Comment: ptr::null_mut(),
-            LastWritten: FILETIME { dwLowDateTime: 0, dwHighDateTime: 0 },
-            CredentialBlobSize: blob.len() as u32,
-            CredentialBlob: blob.as_ptr() as *mut u8,
-            Persist: CRED_PERSIST_LOCAL_MACHINE,
-            AttributeCount: 0,
-            Attributes: ptr::null_mut(),
-            TargetAlias: ptr::null_mut(),
-            UserName: ptr::null_mut(),
-        };
-        // SAFETY: pointers live until the call returns.
-        assert!(unsafe { CredWriteW(&cred, 0) } != 0);
-    }
+    Ok(())
 }
 
 #[cfg(test)]
 mod tests {
     #[test]
-    fn roundtrip_and_migration() {
+    fn roundtrip() {
         let dir = std::env::temp_dir().join(format!("twinyard-creds-{}", std::process::id()));
         // SAFETY: the only test in this binary touching TWINYARD_DATA.
         unsafe { std::env::set_var("TWINYARD_DATA", &dir) };
@@ -166,11 +96,6 @@ mod tests {
         super::delete(id).unwrap();
         assert_eq!(super::get(id), None);
 
-        // Old Credential Manager entry is moved into the file.
-        super::legacy::set(id, "stare");
-        assert_eq!(super::get(id).as_deref(), Some("stare"));
-        assert_eq!(super::legacy::get(id), None);
-        super::delete(id).unwrap();
         std::fs::remove_dir_all(&dir).ok();
     }
 }
