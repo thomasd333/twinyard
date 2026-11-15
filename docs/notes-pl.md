@@ -322,7 +322,8 @@ zwykłe SendKeys bez sprawdzenia fokusu.
   .txt ma zepsute skojarzenie → wcześniej „Nie można odnaleźć aplikacji”.)
 - Pominięte na życzenie: import hotlisty TC.
 - ✅ Przeciąganie (App.svelte `startDrag`, Panel `rowDown`): między panelami / na katalog (Shift = przenieś),
-  z Eksploratora (Tauri onDragDropEvent), poza okno → OLE (`dnd.rs`, crate `drag`). Niesprawdzone w oknie.
+  z Eksploratora (Tauri onDragDropEvent), poza okno → OLE (`dnd.rs`, crate `drag`). Wyjście z okna wykrywane
+  w `mousemove` (współrzędne poza oknem) — WebView2 przy wciśniętym przycisku nie wysyła `mouseleave`.
 - ✅ Menu kontekstowe Eksploratora (`ctxmenu.rs`, IContextMenu2/3 + subclass na czas menu): prawy klik,
   klawisz Menu, Shift+F10. Prawy klik już NIE zaznacza (Ctrl+klik / Insert). Niesprawdzone w oknie.
 - ✅ `\\serwer` bez udziału = lista udziałów (`core/unc.rs`, NetShareEnum); „..” z `\\serwer\udział` → `\\serwer`.

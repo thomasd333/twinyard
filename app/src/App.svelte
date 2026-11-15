@@ -392,6 +392,9 @@
     drag = { from, paths, names, x, y, side: null, dir: null, move: false };
     const move = (e: MouseEvent) => {
       if (!drag) return;
+      // While the button is held, WebView2 keeps capturing the mouse, so `mouseleave`
+      // never fires — but mousemove keeps coming with coordinates outside the window.
+      if (e.clientX < 0 || e.clientY < 0 || e.clientX >= window.innerWidth || e.clientY >= window.innerHeight) return leave();
       const hit = dropTargetAt(e.clientX, e.clientY, drag.paths);
       drag = { ...drag, x: e.clientX, y: e.clientY, move: e.shiftKey, ...hit };
     };
