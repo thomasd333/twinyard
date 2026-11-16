@@ -4883,7 +4883,7 @@ checksum = "e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b"
 
 [[package]]
 name = "twinyard"
-version = "0.9.0"
+version = "0.9.1"
 dependencies = [
  "drag",
  "log",
@@ -4901,7 +4901,7 @@ dependencies = [
 
 [[package]]
 name = "twinyard-core"
-version = "0.9.0"
+version = "0.9.1"
 dependencies = [
  "flate2",
  "serde",
@@ -4917,7 +4917,7 @@ dependencies = [
 
 [[package]]
 name = "twinyard-remote"
-version = "0.9.0"
+version = "0.9.1"
 dependencies = [
  "env_logger",
  "log",
