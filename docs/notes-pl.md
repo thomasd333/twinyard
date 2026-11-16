@@ -175,6 +175,10 @@ cargo test -p twinyard-core
 Struktura: `crates/core` (FS, sortowanie naturalne, dyski — bez UI) · `app/src-tauri` (komendy
 Tauri) · `app/src` (Svelte: `App.svelte`, `lib/Panel.svelte`, `lib/panelState.svelte.ts`).
 
+Zmiana ikony: `npx tauri icon src-tauri/icons/source.svg -o <temp>` i skopiować tylko pliki, które już są
+w `icons/`. Potem **dotknąć `app/src-tauri/build.rs`** (zmienić datę) — sama zmiana ikon nie przebudowuje
+zasobów exe i build dalej ma starą ikonę.
+
 Uwaga dla Claude: na Windows PowerShell 5.1 `Get-Content`/`Set-Content` psuje UTF-8 (polskie
 znaki) — pliki edytować narzędziem Edit, nie zamianą w PowerShellu. Nie nazywać plików różniących
 się tylko wielkością liter (`Panel.svelte` vs `panel.svelte.ts` — kolizja na NTFS).
