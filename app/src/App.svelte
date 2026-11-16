@@ -1111,6 +1111,10 @@ ${t("Kopia lokalna: {0}", local)}`,
       p.moveCursor(-1);
     } else if (k === "PageDown" && ctrl) void p.activate();
     else if (k === "PageUp" && ctrl) void p.goParent();
+    else if (k === "PageDown" && shift) p.markMove(p.pageRows);
+    else if (k === "PageUp" && shift) p.markMove(-p.pageRows);
+    else if (k === "Home" && shift) p.markMove(-p.cursor, true);
+    else if (k === "End" && shift) p.markMove(p.rowCount - 1 - p.cursor, true);
     else if (k === "PageDown") p.moveCursor(p.pageRows);
     else if (k === "PageUp") p.moveCursor(-p.pageRows);
     else if (k === "Home") p.cursor = 0;

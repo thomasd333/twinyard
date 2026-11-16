@@ -28,6 +28,7 @@
 
   // ---------- drag start (mouse) ----------
   function rowDown(row: number, e: MouseEvent) {
+    if (e.button === 2) return rightDown(row, e);
     if (e.button !== 0) return;
     const sx = e.clientX,
       sy = e.clientY;
@@ -246,9 +247,68 @@
     else if (e.button === 4) (e.preventDefault(), void panel.goForward());
   }
 
+  // ---------- right-button drag: mark the rows swept over (TC) ----------
+  /** Set when a right drag marked something: the context menu that follows is swallowed. */
+  let rightDragged = false;
+
+  /** Row under a viewport point (may lie outside the list: clamped). */
+  function rowAt(x: number, y: number): number {
+    const r = scroller.getBoundingClientRect();
+    let row: number;
+    if (brief) {
+      const col = Math.floor((x - r.left + scroller.scrollLeft) / colW);
+      const inCol = Math.max(0, Math.min(rpc - 1, Math.floor((y - r.top) / ROW)));
+      row = col * rpc + inCol;
+    } else row = Math.floor((y - r.top + scroller.scrollTop) / ROW);
+    return Math.max(0, Math.min(rowCount - 1, row));
+  }
+
+  function rightDown(start: number, e: MouseEvent) {
+    rightDragged = false;
+    const p = panel;
+    const base = p.marked;
+    const i = p.entryAt(start);
+    // Like TC: the sweep sets the opposite of the first entry's state.
+    const on = i === PARENT || i === undefined ? true : !base.has(i);
+    let last = start;
+    let px = e.clientX,
+      py = e.clientY;
+
+    const apply = (row: number) => {
+      if (row === last && !rightDragged) return;
+      last = row;
+      rightDragged = true;
+      p.markRange(start, row, on, base);
+      p.cursor = row;
+    };
+    const move = (m: MouseEvent) => {
+      if (!(m.buttons & 2)) return cleanup();
+      px = m.clientX;
+      py = m.clientY;
+      apply(rowAt(px, py));
+    };
+    // Pointer held above/below (left/right in brief) the list: keep scrolling it.
+    const timer = setInterval(() => {
+      const r = scroller.getBoundingClientRect();
+      const out = brief ? (px < r.left ? -rpc : px > r.right ? rpc : 0) : py < r.top ? -1 : py > r.bottom ? 1 : 0;
+      if (out) apply(Math.max(0, Math.min(rowCount - 1, last + out)));
+    }, 40);
+    const cleanup = () => {
+      clearInterval(timer);
+      window.removeEventListener("mousemove", move);
+      window.removeEventListener("mouseup", up);
+    };
+    const up = (m: MouseEvent) => {
+      if (m.button === 2) cleanup();
+    };
+    window.addEventListener("mousemove", move);
+    window.addEventListener("mouseup", up);
+  }
+
   /** Right click: Explorer's context menu for the selection (or this entry). */
   function rowContext(row: number, e: MouseEvent) {
     e.preventDefault();
+    if (rightDragged) return void (rightDragged = false);
     onfocus();
     const i = panel.entryAt(row);
     if (i === PARENT || i === undefined || !panel.listing) return;

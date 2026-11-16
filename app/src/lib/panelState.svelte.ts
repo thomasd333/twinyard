@@ -315,6 +315,37 @@ export class PanelState {
     this.marked = m;
   }
 
+  /** Sets the mark of every entry in rows a..b (either order, inclusive) on `base` (default: current marks). */
+  markRange(a: number, b: number, on: boolean, base: Set<number> = this.marked) {
+    const m = new Set(base);
+    const lo = Math.max(0, Math.min(a, b));
+    const hi = Math.min(this.rowCount - 1, Math.max(a, b));
+    for (let row = lo; row <= hi; row++) {
+      const i = this.entryAt(row);
+      if (i === PARENT || i === undefined) continue;
+      if (on) m.add(i);
+      else m.delete(i);
+    }
+    this.marked = m;
+  }
+
+  /**
+   * Shift+PgUp/PgDn/Home/End (TC): marks the rows passed over, cursor row included,
+   * with the opposite of the cursor entry's state — like holding Shift+↓.
+   * `toEdge` (Home/End) also marks the target row.
+   */
+  markMove(delta: number, toEdge = false) {
+    const from = this.cursor;
+    const to = Math.max(0, Math.min(this.rowCount - 1, from + delta));
+    if (to === from && !toEdge) return this.toggleMark();
+    const i = this.entryAt(from);
+    const on = i === PARENT || i === undefined ? true : !this.marked.has(i);
+    // Hitting the list edge marks the last row too (Shift+↓ held at the bottom does).
+    const end = toEdge || to !== from + delta ? to : to - Math.sign(delta);
+    this.markRange(from, end, on);
+    this.cursor = to;
+  }
+
   invertMarks() {
     const m = new Set<number>();
     for (const i of this.order) if (!this.marked.has(i) && !this.isDir(i)) m.add(i);

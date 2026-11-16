@@ -404,6 +404,10 @@ export const EN: Record<string, string> = {
 
   "Zaznacz / odznacz": "Mark / unmark",
   "Zaznaczaj idąc": "Mark while moving",
+  "Zaznacz stronę w górę / w dół": "Mark a page up / down",
+  "Zaznacz wszystko do początku / do końca": "Mark everything up to the top / bottom",
+  "Przeciągnij prawym": "Right-drag",
+  "Zaznacz (albo odznacz) przeciągnięte pliki; sam prawy klik — menu kontekstowe": "Mark (or unmark) the files swept over; a plain right click opens the context menu",
   "Ctrl+klik": "Ctrl+click",
   "Zaznacz myszą": "Mark with the mouse",
   "Zaznacz wszystko": "Mark all",
