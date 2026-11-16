@@ -33,6 +33,7 @@ export function shortcuts(): { group: string; items: [string, string][] }[] {
         ["Insert", t("Zaznacz / odznacz")],
         [t("Spacja"), t("Zaznacz; na katalogu też policz jego rozmiar (Esc przerywa)")],
         ["Alt+Shift+Enter", t("Policz rozmiary wszystkich katalogów")],
+        ["Ctrl+Q", t("Rozmiar oraz liczba plików i katalogów zaznaczonych (albo spod kursora)")],
         ["Shift+↑ / Shift+↓", t("Zaznaczaj idąc")],
         ["Shift+PgUp / Shift+PgDn", t("Zaznacz stronę w górę / w dół")],
         ["Shift+Home / Shift+End", t("Zaznacz wszystko do początku / do końca")],

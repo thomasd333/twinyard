@@ -401,6 +401,8 @@ interop -- --ignored`).
 - ✅ Stopka panelu: wolne / całkowite miejsce (też UNC i archiwa = wolumin archiwum).
 - ✅ Spacja na katalogu = zaznacz + policz rozmiar (lokalnie, FTP, archiwum); Alt+Shift+Enter = wszystkie;
   Esc przerywa (`dir_size_cancel`, numer generacji). Rozmiary liczą się w podsumowaniu stopki.
+- ✅ Ctrl+Q = okno z rozmiarem i liczbą plików / katalogów zaznaczonych (albo spod kursora); ten sam
+  `dir_size`, Esc przerywa, wyniki trafiają też do kolumny rozmiaru.
 - ✅ Num + / Num − = (od)znacz maską (pliki; `*\` = katalogi), Ctrl+Num − = odznacz wszystko, Ctrl+A bez zmian.
 - ✅ Schowek plików Ctrl+C / Ctrl+X / Ctrl+V (CF_HDROP + „Preferred DropEffect” — wspólny z Eksploratorem;
   wklejanie też na FTP i do ZIP; po wklejeniu wyciętych schowek czyszczony), Ctrl+Shift+C ścieżki,

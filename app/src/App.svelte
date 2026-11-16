@@ -24,6 +24,7 @@
   import TitleBar from "./lib/TitleBar.svelte";
   import { setCloseGuard, store } from "./lib/uiState";
   import { applyColors, colorTemplate } from "./lib/userColors";
+  import { formatBytes, formatHuman } from "./lib/format";
 
 
   // ---------- state ----------
@@ -74,6 +75,8 @@
         message: string;
         okLabel: string;
         danger?: boolean;
+        /** Just information: only the OK button. */
+        info?: boolean;
         check?: { label: string; value: boolean };
         onok: () => unknown;
       };
@@ -556,6 +559,62 @@
     sizingAll = false;
   }
   let sizingAll = false;
+
+  /** Ctrl+Q: total size and count of files / folders of the selection (or the item under the cursor). */
+  async function countSelection(p: PanelState) {
+    const l = p.listing;
+    if (!l || p.isVirtual) return;
+    const path = p.path;
+    let idx = [...p.order].filter((i) => p.marked.has(i));
+    if (!idx.length) {
+      const i = p.entryAt(p.cursor);
+      idx = i === PARENT || i === undefined ? [] : [i];
+    }
+    if (!idx.length) return;
+    let bytes = 0,
+      files = 0,
+      dirs = 0;
+    sizingAll = true;
+    try {
+      for (const i of idx) {
+        if (!p.isDir(i)) {
+          bytes += l.sizes[i];
+          files++;
+          continue;
+        }
+        const name = l.names[i];
+        const key = name.toLowerCase();
+        p.sizing = key;
+        try {
+          const s = await api.dirSize(joinPath(path, name));
+          if (p.path !== path) return;
+          if (s.partial || !sizingAll) return notify(t("Liczenie przerwane"));
+          p.dirSizes = new Map(p.dirSizes).set(key, s.bytes);
+          bytes += s.bytes;
+          files += s.files;
+          dirs += 1 + s.dirs;
+        } finally {
+          if (p.sizing === key) p.sizing = null;
+        }
+      }
+    } catch (e) {
+      return notify(String(e));
+    } finally {
+      sizingAll = false;
+    }
+    const what = idx.length === 1 ? t("„{0}”", l.names[idx[0]]) : `${idx.length} ${tn(idx.length, "element|elementy|elementów")}`;
+    openDialog({
+      kind: "confirm",
+      info: true,
+      title: t("Rozmiar: {0}", what),
+      message:
+        `${t("Rozmiar:")} ${formatHuman(bytes)} (${formatBytes(bytes)} B)\n` +
+        `${t("Pliki:")} ${formatBytes(files)}\n` +
+        `${t("Katalogi:")} ${formatBytes(dirs)}`,
+      okLabel: "OK",
+      onok: () => {},
+    });
+  }
 
   function stopSizing() {
     sizingAll = false;
@@ -1092,6 +1151,7 @@ ${t("Kopia lokalna: {0}", local)}`,
     else if (ctrl && !alt && !shift && k === "ArrowLeft") openIn(0);
     else if (ctrl && !alt && !shift && k === "ArrowRight") openIn(1);
     else if (alt && shift && k === "Enter") void sizeAllDirs(p);
+    else if (ctrl && !alt && !shift && k.toLowerCase() === "q") void countSelection(p);
     else if (ctrl && !alt && !shift && k.toLowerCase() === "c") clipFiles(false);
     else if (ctrl && !alt && !shift && k.toLowerCase() === "x") clipFiles(true);
     else if (ctrl && !alt && !shift && k.toLowerCase() === "v") void paste();
@@ -1316,7 +1376,7 @@ ${t("Kopia lokalna: {0}", local)}`,
     onclose={cancelDialog}
     buttons={[
       { label: d.okLabel, primary: true, danger: d.kind === "confirm" && d.danger, run: submitDialog },
-      { label: t("Anuluj"), run: cancelDialog },
+      ...(d.kind === "confirm" && d.info ? [] : [{ label: t("Anuluj"), run: cancelDialog }]),
     ]}
   >
     {#if d.kind === "input"}
