@@ -1,11 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect x="26" y="26" width="460" height="460" rx="88" fill="#1c1f24" stroke="#ffffff" stroke-width="20"/>
-  <rect x="80" y="110" width="166" height="292" rx="20" fill="#2f5fb8"/>
-  <rect x="266" y="110" width="166" height="292" rx="20" fill="#4a525e"/>
-  <rect x="102" y="156" width="120" height="22" rx="8" fill="#ffffff"/>
-  <rect x="102" y="200" width="92" height="22" rx="8" fill="#cfe0ff"/>
-  <rect x="102" y="244" width="108" height="22" rx="8" fill="#cfe0ff"/>
-  <rect x="288" y="156" width="106" height="22" rx="8" fill="#9aa2ae"/>
-  <rect x="288" y="200" width="120" height="22" rx="8" fill="#9aa2ae"/>
-  <rect x="288" y="244" width="84" height="22" rx="8" fill="#9aa2ae"/>
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4a8ff2"/>
+      <stop offset="1" stop-color="#2154c4"/>
+    </linearGradient>
+  </defs>
+  <rect x="32" y="32" width="448" height="448" rx="110" fill="url(#tile)"/>
+  <path d="M140 112H330L392 174V372Q392 400 364 400H148Q120 400 120 372V132Q120 112 140 112Z" fill="#ffffff"/>
+  <rect x="178" y="112" width="124" height="86" rx="8" fill="#2f6fd6"/>
+  <rect x="258" y="128" width="28" height="54" rx="6" fill="#ffffff"/>
+  <rect x="150" y="248" width="98" height="124" rx="12" fill="#2f6fd6"/>
+  <rect x="264" y="248" width="98" height="124" rx="12" fill="#8fb8f5"/>
 </svg>
