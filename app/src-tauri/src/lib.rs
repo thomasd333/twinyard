@@ -478,6 +478,7 @@ pub fn run() {
             extras::disk_space,
             extras::dir_size,
             extras::dir_size_cancel,
+            extras::dir_size_progress,
             extras::clipboard_set_files,
             extras::clipboard_set_text,
             extras::clipboard_get_files,

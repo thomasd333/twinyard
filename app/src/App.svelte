@@ -75,13 +75,14 @@
         message: string;
         okLabel: string;
         danger?: boolean;
-        /** Just information: only the OK button. */
-        info?: boolean;
         check?: { label: string; value: boolean };
         onok: () => unknown;
       };
   let dialog: Dialog | null = $state(null);
   let dialogError: string | null = $state(null);
+  /** Ctrl+Q window (size + count of the selection). */
+  type Counting = { title: string; bytes: number; files: number; dirs: number; running: boolean; stopped: boolean };
+  let counting: Counting | null = $state(null);
   let favorites: Favorite[] = $state([]);
   let favOpen = $state(false);
   let connOpen = $state(false);
@@ -97,6 +98,7 @@
   let diffPair: [string, string] | null = $state(null);
   const modalOpen = $derived(
     dialog !== null ||
+      counting !== null ||
       favOpen ||
       connOpen ||
       helpOpen ||
@@ -230,6 +232,10 @@
   // them off mid-file: ask first.
   let forceClose = false;
   setCloseGuard(() => {
+    // The viewer / diff fill the window under the title bar, so their ✕ sits
+    // right below the window's ✕: closing the window closes them first.
+    if (!forceClose && viewerPath) return (viewerPath = null), false;
+    if (!forceClose && diffPair) return (diffPair = null), false;
     if (forceClose || !jobs.busy) return true;
     openDialog({
       kind: "confirm",
@@ -560,10 +566,12 @@
   }
   let sizingAll = false;
 
+  // ---------- Ctrl+Q: size + count window ----------
+
   /** Ctrl+Q: total size and count of files / folders of the selection (or the item under the cursor). */
   async function countSelection(p: PanelState) {
     const l = p.listing;
-    if (!l || p.isVirtual) return;
+    if (!l || p.isVirtual || counting) return;
     const path = p.path;
     let idx = [...p.order].filter((i) => p.marked.has(i));
     if (!idx.length) {
@@ -571,49 +579,74 @@
       idx = i === PARENT || i === undefined ? [] : [i];
     }
     if (!idx.length) return;
-    let bytes = 0,
-      files = 0,
-      dirs = 0;
+    const what = idx.length === 1 ? t("„{0}”", l.names[idx[0]]) : `${idx.length} ${tn(idx.length, "element|elementy|elementów")}`;
+    const c: Counting = $state({ title: t("Rozmiar: {0}", what), bytes: 0, files: 0, dirs: 0, running: true, stopped: false });
+    counting = c;
+    // Totals of finished items + what the running walk has counted so far.
+    const done = { bytes: 0, files: 0, dirs: 0 };
+    let inDir = false;
+    const show = (live = { bytes: 0, files: 0, dirs: 0 }) => {
+      c.bytes = done.bytes + live.bytes;
+      c.files = done.files + live.files;
+      c.dirs = done.dirs + live.dirs;
+    };
+    const poll = setInterval(() => {
+      if (inDir)
+        api.dirSizeProgress().then((live) => {
+          if (inDir && c.running) show({ ...live, dirs: live.dirs + 1 });
+        }, () => {});
+    }, 150);
     sizingAll = true;
     try {
       for (const i of idx) {
+        if (!sizingAll || counting !== c) break;
         if (!p.isDir(i)) {
-          bytes += l.sizes[i];
-          files++;
+          done.bytes += l.sizes[i];
+          done.files++;
+          show();
           continue;
         }
         const name = l.names[i];
         const key = name.toLowerCase();
-        p.sizing = key;
+        if (p.path === path) p.sizing = key;
+        inDir = true;
         try {
           const s = await api.dirSize(joinPath(path, name));
-          if (p.path !== path) return;
-          if (s.partial || !sizingAll) return notify(t("Liczenie przerwane"));
-          p.dirSizes = new Map(p.dirSizes).set(key, s.bytes);
-          bytes += s.bytes;
-          files += s.files;
-          dirs += 1 + s.dirs;
+          inDir = false;
+          done.bytes += s.bytes;
+          done.files += s.files;
+          done.dirs += 1 + s.dirs;
+          show();
+          if (s.partial) {
+            c.stopped = true;
+            break;
+          }
+          if (p.path === path) p.dirSizes = new Map(p.dirSizes).set(key, s.bytes);
         } finally {
+          inDir = false;
           if (p.sizing === key) p.sizing = null;
         }
       }
     } catch (e) {
-      return notify(String(e));
+      if (counting === c) counting = null;
+      notify(String(e));
     } finally {
-      sizingAll = false;
+      clearInterval(poll);
+      if (counting === c) sizingAll = false;
+      c.running = false;
     }
-    const what = idx.length === 1 ? t("„{0}”", l.names[idx[0]]) : `${idx.length} ${tn(idx.length, "element|elementy|elementów")}`;
-    openDialog({
-      kind: "confirm",
-      info: true,
-      title: t("Rozmiar: {0}", what),
-      message:
-        `${t("Rozmiar:")} ${formatHuman(bytes)} (${formatBytes(bytes)} B)\n` +
-        `${t("Pliki:")} ${formatBytes(files)}\n` +
-        `${t("Katalogi:")} ${formatBytes(dirs)}`,
-      okLabel: "OK",
-      onok: () => {},
-    });
+  }
+
+  /** "Przerwij": stop counting, keep the window with the numbers so far. */
+  function stopCounting() {
+    if (!counting?.running) return;
+    counting.stopped = true;
+    stopSizing();
+  }
+
+  function closeCounting() {
+    if (counting?.running) stopSizing();
+    counting = null;
   }
 
   function stopSizing() {
@@ -1369,6 +1402,28 @@ ${t("Kopia lokalna: {0}", local)}`,
   />
 {/if}
 
+{#if counting}
+  {@const c = counting}
+  <Modal
+    title={c.title}
+    onclose={closeCounting}
+    buttons={c.running ? [{ label: t("Przerwij"), primary: true, run: stopCounting }] : [{ label: "OK", primary: true, run: closeCounting }]}
+  >
+    <div class="count-bar" class:indeterminate={c.running}><div></div></div>
+    <dl class="count">
+      <dt>{t("Rozmiar:")}</dt>
+      <dd>{formatHuman(c.bytes)} <small>({formatBytes(c.bytes)} B)</small></dd>
+      <dt>{t("Pliki:")}</dt>
+      <dd>{formatBytes(c.files)}</dd>
+      <dt>{t("Katalogi:")}</dt>
+      <dd>{formatBytes(c.dirs)}</dd>
+    </dl>
+    <p class="count-state">
+      {c.running ? t("Liczenie…") : c.stopped ? t("Przerwano — liczby są niepełne") : t("Gotowe")}
+    </p>
+  </Modal>
+{/if}
+
 {#if dialog}
   {@const d = dialog}
   <Modal
@@ -1376,7 +1431,7 @@ ${t("Kopia lokalna: {0}", local)}`,
     onclose={cancelDialog}
     buttons={[
       { label: d.okLabel, primary: true, danger: d.kind === "confirm" && d.danger, run: submitDialog },
-      ...(d.kind === "confirm" && d.info ? [] : [{ label: t("Anuluj"), run: cancelDialog }]),
+      { label: t("Anuluj"), run: cancelDialog },
     ]}
   >
     {#if d.kind === "input"}
@@ -1500,6 +1555,51 @@ ${t("Kopia lokalna: {0}", local)}`,
   }
   .field input:focus {
     border-color: var(--accent);
+  }
+  .count-bar {
+    height: 4px;
+    margin: 2px 0 12px;
+    border-radius: 2px;
+    overflow: hidden;
+    background: var(--border);
+  }
+  .count-bar > div {
+    height: 100%;
+    background: var(--accent);
+  }
+  .count-bar.indeterminate > div {
+    width: 30%;
+    animation: count-slide 1s ease-in-out infinite alternate;
+  }
+  @keyframes count-slide {
+    from {
+      margin-left: 0;
+    }
+    to {
+      margin-left: 70%;
+    }
+  }
+  .count {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 4px 14px;
+    margin: 0;
+    min-width: 300px;
+    font-variant-numeric: tabular-nums;
+  }
+  .count dt {
+    color: var(--fg-dim);
+  }
+  .count dd {
+    margin: 0;
+  }
+  .count small,
+  .count-state {
+    color: var(--fg-dim);
+  }
+  .count-state {
+    margin: 12px 0 0;
+    font-size: 12px;
   }
   .msg,
   .field span {

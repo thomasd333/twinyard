@@ -32,9 +32,10 @@ pub async fn disk_space(path: String) -> Result<Option<Space>, String> {
 }
 
 /// Generation of the running size calculation: a newer request (or a
-/// cancel) makes older walks stop early.
+/// cancel) makes older walks stop early. `live` = bytes, files, dirs counted
+/// so far by the running walk (for the Ctrl+Q progress window).
 #[derive(Default)]
-pub struct SizeJobs(AtomicU64);
+pub struct SizeJobs(AtomicU64, [AtomicU64; 3]);
 
 #[derive(serde::Serialize)]
 pub struct DirSize {
@@ -52,7 +53,16 @@ pub async fn dir_size(remote: State<'_, Arc<Remote>>, jobs: State<'_, Arc<SizeJo
     let (r, j) = (remote.inner().clone(), jobs.inner().clone());
     let gen_ = j.0.fetch_add(1, Ordering::Relaxed) + 1;
     blocking(move || {
-        let alive = || j.0.load(Ordering::Relaxed) == gen_;
+        j.1.iter().for_each(|a| a.store(0, Ordering::Relaxed));
+        let alive = |s: &DirSize| {
+            let mine = j.0.load(Ordering::Relaxed) == gen_;
+            if mine {
+                j.1[0].store(s.bytes, Ordering::Relaxed);
+                j.1[1].store(s.files, Ordering::Relaxed);
+                j.1[2].store(s.dirs, Ordering::Relaxed);
+            }
+            mine
+        };
         let mut s = DirSize { bytes: 0, files: 0, dirs: 0, partial: false };
         if is_remote(&path) {
             remote_walk(&r, &path, &mut s, &alive);
@@ -61,9 +71,19 @@ pub async fn dir_size(remote: State<'_, Arc<Remote>>, jobs: State<'_, Arc<SizeJo
         } else {
             local_walk(Path::new(&path), &mut s, &alive);
         }
+        if j.0.load(Ordering::Relaxed) == gen_ {
+            j.1.iter().for_each(|a| a.store(0, Ordering::Relaxed)); // no stale numbers for the next poll
+        }
         Ok(s)
     })
     .await
+}
+
+/// What the running `dir_size` has counted so far.
+#[tauri::command]
+pub fn dir_size_progress(jobs: State<'_, Arc<SizeJobs>>) -> DirSize {
+    let v = |i: usize| jobs.1[i].load(Ordering::Relaxed);
+    DirSize { bytes: v(0), files: v(1), dirs: v(2), partial: true }
 }
 
 /// Stops a running `dir_size` (Esc, leaving the folder).
@@ -72,10 +92,10 @@ pub fn dir_size_cancel(jobs: State<'_, Arc<SizeJobs>>) {
     jobs.0.fetch_add(1, Ordering::Relaxed);
 }
 
-fn local_walk(dir: &Path, s: &mut DirSize, alive: &dyn Fn() -> bool) {
+fn local_walk(dir: &Path, s: &mut DirSize, alive: &dyn Fn(&DirSize) -> bool) {
     let Ok(rd) = std::fs::read_dir(dir) else { return };
     for e in rd.flatten() {
-        if !alive() {
+        if !alive(s) {
             s.partial = true;
             return;
         }
@@ -93,10 +113,10 @@ fn local_walk(dir: &Path, s: &mut DirSize, alive: &dyn Fn() -> bool) {
     }
 }
 
-fn remote_walk(r: &Remote, url: &str, s: &mut DirSize, alive: &dyn Fn() -> bool) {
+fn remote_walk(r: &Remote, url: &str, s: &mut DirSize, alive: &dyn Fn(&DirSize) -> bool) {
     let Ok(l) = r.list(url) else { return };
     for i in 0..l.names.len() {
-        if !alive() {
+        if !alive(s) {
             s.partial = true;
             return;
         }
