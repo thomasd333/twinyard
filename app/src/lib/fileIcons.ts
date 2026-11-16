@@ -42,34 +42,97 @@ add("db", "db sqlite sqlite3 mdb accdb dbf bak");
 add("font", "ttf otf woff woff2 eot fon");
 add("disk", "vhd vhdx vmdk img dmg");
 
-/* Filled, muted icons in the style of Windows/Total Commander: a grey page with a coloured
-   type badge for documents and code, solid pictograms for the rest. Colours of the page and
-   the folder come from CSS tokens (--icon-*, --folder-*), so they follow the theme.
-   Preview of the design: docs/design/file-list-preview.html */
+/* Filled icons in the style of Windows/Total Commander: a grey page with a full-width coloured
+   type badge for documents and code, solid pictograms for the rest. Badge labels use a 3×5
+   pixel font so they stay legible at 16 px. Colours of the page and the folder come from CSS
+   tokens (--icon-*, --folder-*), so they follow the theme.
+   Previews of the design: docs/design/file-list-preview.html, docs/design/file-icons-preview.html (variant D) */
 
 const PAGE = `<path fill="var(--icon-page)" d="M3 1h6.5L13 4.5V15H3z"/><path fill="var(--icon-fold)" d="M9.5 1v3.5H13z"/>`;
 const LINES = `<path fill="none" stroke="var(--icon-lines)" stroke-width="1" d="M5 6.5h6M5 8.5h6M5 10.5h6M5 12.5h4"/>`;
 
-function badge(color: string, text: string): string {
-  const fs = text.length === 1 ? 6.6 : text.length === 2 ? 5.6 : 4.8;
-  return (
-    `<rect x="1" y="8.5" width="12.5" height="6" rx="1" fill="${color}"/>` +
-    `<text x="7.25" y="13.3" fill="#fff" font-family="Segoe UI,Arial" font-weight="700" font-size="${fs}" text-anchor="middle" letter-spacing="-.2">${text}</text>`
-  );
+/** 3×5 pixel glyphs, rows top to bottom, "1" = lit. */
+const PX: Record<string, string> = {
+  A: "010101111101101", B: "110101110101110", C: "011100100100011", D: "110101101101110",
+  E: "111100110100111", F: "111100110100100", G: "011100101101011", H: "101101111101101",
+  I: "111010010010111", J: "001001001101010", K: "101101110101101", L: "100100100100111",
+  M: "101111111101101", N: "110101101101101", O: "010101101101010", P: "110101110100100",
+  Q: "010101101110011", R: "110101110101101", S: "011100010001110", T: "111010010010010",
+  U: "101101101101111", V: "101101101101010", W: "101101111111101", X: "101101010101101",
+  Y: "101101010010010", Z: "111001010100111", "0": "111101101101111", "1": "010110010010111",
+  "2": "110001010100111", "3": "110001010001110", "4": "101101111001001", "5": "111100110001110",
+  "6": "011100111101111", "7": "111001010010010", "8": "111101111101111", "9": "111101111001110",
+};
+
+function pixelText(text: string, fill: string): string {
+  let x = Math.floor((16 - (text.length * 4 - 1)) / 2);
+  let d = "";
+  for (const ch of text) {
+    const g = PX[ch];
+    for (let i = 0; i < 15; i++) if (g[i] === "1") d += `M${x + (i % 3)} ${10 + Math.floor(i / 3)}h1v1h-1z`;
+    x += 4;
+  }
+  return `<path fill="${fill}" shape-rendering="crispEdges" d="${d}"/>`;
+}
+
+function badge(color: string, fg: string, text: string): string {
+  const bg = `<rect y="8" width="16" height="8" rx="1" fill="${color}"/>`;
+  // single letters (W/X/P) and "Aa" read better as real text than as 3×5 pixels
+  if (text.length === 1 || !/^[0-9A-Z]+$/.test(text))
+    return (
+      bg +
+      `<text x="8" y="12.2" fill="${fg}" font-family="Segoe UI,Arial" font-weight="700" font-size="8" text-anchor="middle" dominant-baseline="central">${text}</text>`
+    );
+  return bg + pixelText(text, fg);
 }
 
 /** Badge colour + fixed label; a null label means "show the extension" (max 3 letters). */
 const BADGE: Partial<Record<IconKind, [string, string | null]>> = {
-  pdf: ["#b8463c", "PDF"],
-  doc: ["#3e6fb6", "W"],
-  sheet: ["#2f7d4f", "X"],
-  slides: ["#c25a2e", "P"],
-  font: ["#7f6f62", "Aa"],
-  code: ["#4c79ad", null],
-  web: ["#c0703a", null],
-  style: ["#7b62ad", null],
-  config: ["#8a7a52", null],
-  script: ["#6b7d3a", null],
+  pdf: ["#c8291c", "PDF"],
+  doc: ["#2b5fbf", "W"],
+  sheet: ["#1e7d43", "X"],
+  slides: ["#cf4a17", "P"],
+  font: ["#6f5f52", "Aa"],
+  code: ["#3d6fb0", null],
+  web: ["#d9531e", null],
+  style: ["#2a7bd6", null],
+  config: ["#8b6b2e", null],
+  script: ["#4f7a1c", null],
+};
+
+/** Per-extension badge colour (overrides the kind's), optional text colour. */
+const EXT_COLOR: Record<string, [string, string?]> = {};
+const color = (c: string, list: string, fg?: string) => list.split(" ").forEach((e) => (EXT_COLOR[e] = [c, fg]));
+color("#5b5fc7", "php phtml inc");
+color("#f0d33a", "js mjs cjs jsx", "#2a2a2a");
+color("#2f74c0", "ts tsx");
+color("#2f6aa8", "py");
+color("#c2185b", "rb");
+color("#b56a13", "java kt");
+color("#6a2a8f", "cs");
+color("#56687a", "c h");
+color("#c8336a", "cpp hpp cc");
+color("#b7410e", "rs");
+color("#0a8fb3", "go");
+color("#e8430d", "svelte");
+color("#2f9a6b", "vue");
+color("#c26b0a", "sql");
+color("#d9531e", "html htm xhtml");
+color("#2a7bd6", "css");
+color("#c2457f", "scss sass");
+color("#a47a00", "json");
+color("#0f8a80", "xml");
+color("#8b6b2e", "yaml yml toml ini cfg conf env lock");
+color("#2c5aa0", "ps1 psm1");
+color("#4f7a1c", "bat cmd sh");
+
+/** Whole-icon pictograms chosen by extension (IDE project files). */
+const VS = `<path fill="#865fc5" d="M11 1 15 3v10l-4 2-6.5-5.5L2 11.5 1 11V5l1-.5 2.5 2z"/><path fill="#5c2d91" d="M11 1v14l-6.5-5.5L11 4zM2 6.3 4 8l-2 1.7z"/>`;
+const GLYPH: Record<string, string> = {
+  "code-workspace": `<path fill="none" stroke="#1f9cf0" stroke-width="2.6" stroke-linecap="round" d="M12.4 2.6 3.2 10.3M12.4 13.4 3.2 5.7"/><rect x="11.2" y="1" width="3.8" height="14" rx="1" fill="#0065a9"/>`,
+  sln: VS,
+  csproj: VS,
+  vcxproj: VS,
 };
 
 const SHAPES: Partial<Record<IconKind, string>> = {
@@ -99,9 +162,12 @@ export function fileIconSvg(name: string): string {
   if (out) return out;
   const kind = EXT[ext] ?? "file";
   const b = BADGE[kind];
-  if (b) {
+  if (GLYPH[ext]) {
+    out = svg(GLYPH[ext]);
+  } else if (b) {
     const label = b[1] ?? ext.slice(0, 3).toUpperCase().replace(/[^0-9A-Z]/g, "");
-    out = svg(PAGE + badge(b[0], label));
+    const [c, fg] = EXT_COLOR[ext] ?? [b[0]];
+    out = svg(PAGE + badge(c, fg ?? "#fff", label));
   } else {
     out = svg(SHAPES[kind] ?? PAGE);
   }

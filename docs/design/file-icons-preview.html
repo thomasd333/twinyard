@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8"><title>twinyard – ikony plików</title>
+<style>
+  body { margin: 0; padding: 16px 20px 40px; background: #181818; color: #ccc; font: 13px "Segoe UI Variable Text","Segoe UI",sans-serif; }
+  h1 { font-size: 17px; font-weight: 600; margin: 0 0 6px; color: #eee; }
+  h2 { font-size: 14px; font-weight: 600; margin: 26px 0 8px; color: #ddd; }
+  .note { max-width: 980px; color: #aaa; line-height: 1.55; margin: 4px 0; }
+  .note b { color: #ddd; }
+  .bar { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; margin: 10px 0; }
+  .bar label { cursor: pointer; }
+  .seg { display: inline-flex; border: 1px solid #3c3c3c; border-radius: 4px; overflow: hidden; }
+  .seg button { background: #232323; color: #ccc; border: 0; padding: 4px 10px; font: inherit; cursor: pointer; }
+  .seg button.on { background: #45484d; color: #fff; }
+  table.cmp { border-collapse: collapse; }
+  .cmp th, .cmp td { padding: 4px 10px; border-bottom: 1px solid #2b2b2b; text-align: center; vertical-align: middle; }
+  .cmp th { color: #ddd; font-weight: 600; position: sticky; top: 0; background: #181818; }
+  .cmp th small { display: block; color: #8c8c8c; font-weight: 400; }
+  .cmp td.e { text-align: left; color: #aaa; font-family: Consolas, monospace; }
+  .cell { display: inline-flex; align-items: center; gap: 8px; }
+  .cell svg { width: 16px; height: 16px; }
+  canvas { image-rendering: pixelated; background: var(--cbg); border-radius: 2px; }
+  .cmp.light { --cbg: #fff; }
+  .cmp.dark { --cbg: #252525; }
+  .panels { display: flex; gap: 24px; flex-wrap: wrap; }
+  .panel { width: 380px; border: 1px solid #3c3c3c; }
+  .row { display: grid; grid-template-columns: 1fr 44px 64px; height: 22px; align-items: center; cursor: default; }
+  .row > span { padding: 0 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .nm { display: flex; align-items: center; gap: 6px; }
+  .nm svg { width: 16px; height: 16px; flex: none; }
+  .r { text-align: right; }
+  .p-light { background: #fff; color: #1d2129; }
+  .p-light .e, .p-light .r { color: #6a7280; font-size: 12px; }
+  .p-light .dir .nm span { color: #8a5a00; font-weight: 600; }
+  .p-light .row:hover { background: #f1f4f8; }
+  .p-light .cursor { background: #2563eb; color: #fff; }
+  .p-light .cursor .e, .p-light .cursor .r { color: #fff; }
+  .p-dark { background: #252525; color: #c0c0c0; }
+  .p-dark .e, .p-dark .r { color: #8c8c8c; font-size: 12px; }
+  .p-dark .dir .nm span { color: #f8c77e; font-weight: 600; }
+  .p-dark .row:hover { background: #2d2e30; }
+  .p-dark .cursor { background: #45484d; color: #fff; }
+  .p-dark .cursor .e, .p-dark .cursor .r { color: #d0d0d0; }
+  .swatches { display: flex; flex-wrap: wrap; gap: 6px 14px; max-width: 980px; }
+  .sw { display: inline-flex; align-items: center; gap: 6px; font-family: Consolas, monospace; color: #aaa; }
+  .sw i { width: 14px; height: 14px; border-radius: 3px; display: inline-block; }
+</style></head><body>
+
+<h1>Ikony plików – propozycje</h1>
+<p class="note">Problem: obecna plakietka ma 6&nbsp;px wysokości i literki 4,8&nbsp;px, więc przy 16&nbsp;px nie da się nic przeczytać. Poniżej trzy kierunki + nowe ikony dla <b>.code-workspace</b> (VS Code) i <b>.sln / .csproj</b> (Visual Studio). Kolory są teraz <b>per rozszerzenie</b> (PHP fioletowo-indygo, JS żółty, TS niebieski…), a nie wspólne dla całej grupy „code”.</p>
+<p class="note"><b>A</b> – obecne. <b>B</b> – duża plakietka (≈ 60% ikony), większy i ściśnięty tekst. <b>C</b> – cała kartka w kolorze typu, biały napis na środku (najmocniejszy kolor). <b>D</b> – plakietka z <b>czcionką pikselową 3×5</b>: idealnie ostra przy skali 100%, przy 125/150% nieco „kanciasta”.</p>
+
+<div class="bar">
+  <span>Powiększenie pokazuje rasteryzację przy skali Windows:</span>
+  <span class="seg" id="scale"><button data-s="1" class="on">100%</button><button data-s="1.25">125%</button><button data-s="1.5">150%</button><button data-s="2">200%</button></span>
+  <span class="seg" id="theme"><button data-t="dark" class="on">ciemny</button><button data-t="light">jasny</button></span>
+</div>
+
+<table class="cmp dark" id="cmp"></table>
+
+<h2>Lista plików</h2>
+<div class="bar">
+  <span>Wariant:</span>
+  <span class="seg" id="variant"><button data-v="A">A obecne</button><button data-v="B" class="on">B duża plakietka</button><button data-v="C">C kafelek</button><button data-v="D">D pikselowa</button></span>
+</div>
+<div class="panels"><div class="panel p-dark" id="ld"></div><div class="panel p-light" id="ll"></div></div>
+
+<h2>Paleta per rozszerzenie</h2>
+<div class="swatches" id="sw"></div>
+
+<script>
+/* ---------- themes ---------- */
+const TH = {
+  light: { page: "#e3e6ea", fold: "#b5bbc4", lines: "#8a919c" },
+  dark:  { page: "#cfcfcf", fold: "#9e9e9e", lines: "#7d7d7d" },
+};
+
+/* ---------- kinds (copy of fileIcons.ts) ---------- */
+const EXT = {};
+const add = (k, l) => l.split(" ").forEach((e) => (EXT[e] = k));
+add("code", "php phtml inc js mjs cjs ts tsx jsx vue svelte py rb pl java kt cs c h cpp hpp cc rs go swift dart lua r scala sql");
+add("web", "html htm xhtml twig tpl blade");
+add("style", "css scss sass less styl");
+add("archive", "zip 7z rar tar gz tgz bz2 xz zst cab iso jar war apk");
+add("image", "png jpg jpeg gif webp bmp ico svg avif heic tif tiff psd ai eps raw cr2 nef");
+add("video", "mp4 mkv avi mov wmv webm m4v mpg mpeg flv 3gp");
+add("audio", "mp3 wav flac ogg m4a aac wma opus mid midi");
+add("text", "txt md log rtf nfo srt readme");
+add("pdf", "pdf");
+add("doc", "doc docx odt pages");
+add("sheet", "xls xlsx xlsm ods csv tsv numbers");
+add("slides", "ppt pptx odp key");
+add("exe", "exe msi com scr appx msix");
+add("script", "bat cmd ps1 psm1 sh vbs reg");
+add("config", "json xml yaml yml toml ini cfg conf config env properties htaccess lock editorconfig gitignore");
+add("db", "db sqlite sqlite3 mdb accdb dbf bak");
+add("font", "ttf otf woff woff2 eot fon");
+add("disk", "vhd vhdx vmdk img dmg");
+
+const OLD_BADGE = {
+  pdf: ["#b8463c", "PDF"], doc: ["#3e6fb6", "W"], sheet: ["#2f7d4f", "X"], slides: ["#c25a2e", "P"], font: ["#7f6f62", "Aa"],
+  code: ["#4c79ad", null], web: ["#c0703a", null], style: ["#7b62ad", null], config: ["#8a7a52", null], script: ["#6b7d3a", null],
+};
+
+/* ---------- new: per-extension colours (white text unless 3rd item) ---------- */
+const NEW_KIND = {
+  pdf: ["#c8291c", "PDF"], doc: ["#2b5fbf", "W"], sheet: ["#1e7d43", "X"], slides: ["#cf4a17", "P"], font: ["#6f5f52", "Aa"],
+  code: ["#3d6fb0", null], web: ["#d9531e", null], style: ["#2a7bd6", null], config: ["#8b6b2e", null], script: ["#4f7a1c", null],
+};
+const C = {};
+const col = (c, list, fg) => list.split(" ").forEach((e) => (C[e] = [c, fg]));
+col("#5b5fc7", "php phtml inc");
+col("#f0d33a", "js mjs cjs jsx", "#2a2a2a");
+col("#2f74c0", "ts tsx");
+col("#2f6aa8", "py");
+col("#c2185b", "rb");
+col("#b56a13", "java kt");
+col("#6a2a8f", "cs");
+col("#56687a", "c h");
+col("#c8336a", "cpp hpp cc");
+col("#b7410e", "rs");
+col("#0a8fb3", "go");
+col("#e8430d", "svelte");
+col("#2f9a6b", "vue");
+col("#c26b0a", "sql");
+col("#d9531e", "html htm xhtml");
+col("#2a7bd6", "css");
+col("#c2457f", "scss sass");
+col("#a47a00", "json");
+col("#0f8a80", "xml");
+col("#8b6b2e", "yaml yml toml ini cfg conf env lock");
+col("#2c5aa0", "ps1 psm1");
+col("#4f7a1c", "bat cmd sh");
+col("#3f4a57", "md");
+
+/* ---------- glyph icons (no badge) ---------- */
+const GLYPH = {
+  // VS Code–like ribbon: dark bar on the right + two crossing bands
+  "code-workspace": `<path fill="none" stroke="#1f9cf0" stroke-width="2.6" stroke-linecap="round" d="M12.4 2.6 3.2 10.3M12.4 13.4 3.2 5.7"/><rect x="11.2" y="1" width="3.8" height="14" rx="1" fill="#0065a9"/>`,
+  // Visual Studio–like: purple infinity-ish band
+  sln: `<path fill="#865fc5" d="M11 1 15 3v10l-4 2-6.5-5.5L2 11.5 1 11V5l1-.5 2.5 2z"/><path fill="#5c2d91" d="M11 1v14l-6.5-5.5L11 4zM2 6.3 4 8l-2 1.7z"/>`,
+};
+GLYPH.csproj = GLYPH.vcxproj = GLYPH.sln;
+
+/* ---------- unchanged pictograms ---------- */
+const SHAPES = {
+  image: `<rect x="1" y="2.5" width="14" height="11" rx="1" fill="#d6dcd2"/><path fill="#5e9461" d="M1 13.5V11l4-4 3.5 3.5 2-2L15 13v.5z"/><circle cx="11" cy="5.5" r="1.4" fill="#d1a83f"/>`,
+  video: `<rect x="1" y="3" width="14" height="10" rx="1.5" fill="#76619e"/><path fill="#fff" d="M6.5 5.5v5l4-2.5z"/>`,
+  audio: `<path fill="#b0668a" d="M6 3.5 13.5 2v9a2 2 0 1 1-1.5-1.94V5L7.5 6v6.5a2 2 0 1 1-1.5-1.94z"/>`,
+  archive: `<rect x="1.5" y="4" width="13" height="10.5" rx="1" fill="#a9844a"/><rect x="1" y="1.5" width="14" height="3.5" rx="1" fill="#c9a466"/><path fill="#5a4320" d="M7 5h2v1H7zM7 7h2v1H7zM7 9h2v1H7zM6.5 11h3v2h-3z"/>`,
+  exe: `<rect x="1" y="2" width="14" height="12" rx="1.2" fill="#d4d7dc"/><path fill="#4a76b3" d="M1 3.2C1 2.5 1.5 2 2.2 2h11.6c.7 0 1.2.5 1.2 1.2V5H1z"/>`,
+  db: `<path fill="#a98d3f" d="M2.5 3.5v9c0 1.2 2.5 2 5.5 2s5.5-.8 5.5-2v-9z"/><ellipse cx="8" cy="3.5" rx="5.5" ry="2" fill="#d4b763"/><path fill="none" stroke="#d4b763" stroke-width=".8" d="M2.5 8c0 1.2 2.5 2 5.5 2s5.5-.8 5.5-2"/>`,
+  disk: `<rect x="1.5" y="4" width="13" height="8" rx="1.5" fill="#8a929c"/><path fill="#cfd5db" d="M3.5 9h3v1h-3z"/><circle cx="12" cy="9.5" r=".8" fill="#9fe08a"/>`,
+};
+
+const FOLDER = `<path fill="#d9a63c" d="M1 3h5l1.5 1.5H15V14H1z"/><path fill="#f5cd62" d="M1 6h14v8H1z"/>`;
+
+/* ---------- 3×5 pixel font ---------- */
+const PX = {
+  A:"010101111101101",B:"110101110101110",C:"011100100100011",D:"110101101101110",E:"111100110100111",F:"111100110100100",
+  G:"011100101101011",H:"101101111101101",I:"111010010010111",J:"001001001101010",K:"101101110101101",L:"100100100100111",
+  M:"101111111101101",N:"110101101101101",O:"010101101101010",P:"110101110100100",Q:"010101101110011",R:"110101110101101",
+  S:"011100010001110",T:"111010010010010",U:"101101101101111",V:"101101101101010",W:"101101111111101",X:"101101010101101",
+  Y:"101101010010010",Z:"111001010100111",0:"111101101101111",1:"010110010010111",2:"110001010100111",3:"110001010001110",
+  4:"101101111001001",5:"111100110001110",6:"011100111101111",7:"111001010010010",8:"111101111101111",9:"111101111001110",
+};
+function pixelText(t, y0, fill) {
+  const w = t.length * 4 - 1;
+  let x0 = Math.floor((16 - w) / 2), d = "";
+  for (const ch of t) {
+    const g = PX[ch] || "000000000000000";
+    for (let i = 0; i < 15; i++) if (g[i] === "1") d += `M${x0 + (i % 3)} ${y0 + Math.floor(i / 3)}h1v1h-1z`;
+    x0 += 4;
+  }
+  return `<path fill="${fill}" shape-rendering="crispEdges" d="${d}"/>`;
+}
+
+/* ---------- builders ---------- */
+const page = (th) => `<path fill="${th.page}" d="M3 1h6.5L13 4.5V15H3z"/><path fill="${th.fold}" d="M9.5 1v3.5H13z"/>`;
+const lines = (th) => `<path fill="none" stroke="${th.lines}" stroke-width="1" d="M5 6.5h6M5 8.5h6M5 10.5h6M5 12.5h4"/>`;
+const extOf = (n) => { const d = n.lastIndexOf("."); return (d >= 0 ? n.slice(d + 1) : "").toLowerCase(); };
+const lbl = (ext) => ext.slice(0, 3).toUpperCase().replace(/[^0-9A-Z]/g, "");
+function mix(hex, w, a) {
+  const p = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const [x, y] = [p(hex), p(w)];
+  return "#" + x.map((v, i) => Math.round(v + (y[i] - v) * a).toString(16).padStart(2, "0")).join("");
+}
+const T = (x, y, fs, fg, t, len) =>
+  `<text x="${x}" y="${y}" fill="${fg}" font-family="Segoe UI,Arial" font-weight="700" font-size="${fs}" text-anchor="middle" dominant-baseline="central"${len ? ` textLength="${len}" lengthAdjust="spacingAndGlyphs"` : ""}>${t}</text>`;
+
+function iconA(ext, th) {
+  const k = EXT[ext] || "file", b = OLD_BADGE[k];
+  if (b) {
+    const t = b[1] ?? lbl(ext), fs = t.length === 1 ? 6.6 : t.length === 2 ? 5.6 : 4.8;
+    return page(th) + `<rect x="1" y="8.5" width="12.5" height="6" rx="1" fill="${b[0]}"/>` +
+      `<text x="7.25" y="13.3" fill="#fff" font-family="Segoe UI,Arial" font-weight="700" font-size="${fs}" text-anchor="middle" letter-spacing="-.2">${t}</text>`;
+  }
+  if (k === "text") return page(th) + lines(th);
+  return SHAPES[k] || page(th);
+}
+function spec(ext) {
+  const k = EXT[ext] || "file", nk = NEW_KIND[k];
+  if (!nk) return null;
+  const [c, fg] = C[ext] || [nk[0]];
+  return { c, fg: fg || "#fff", t: nk[1] ?? lbl(ext) };
+}
+function common(ext, th) {
+  if (GLYPH[ext]) return GLYPH[ext];
+  const k = EXT[ext] || "file";
+  if (k === "text") return page(th) + lines(th);
+  return SHAPES[k] || null;
+}
+function iconB(ext, th) {
+  const s = spec(ext);
+  if (!s) return common(ext, th) || page(th);
+  const n = s.t.length, fs = n === 1 ? 9 : n === 2 ? 7.6 : 6.9;
+  return page(th) + `<rect x=".5" y="6.5" width="15" height="9" rx="1.5" fill="${s.c}"/>` + T(8, 11.2, fs, s.fg, s.t, n === 3 ? 14 : 0);
+}
+function iconC(ext, th) {
+  const s = spec(ext);
+  if (!s) return common(ext, th) || page(th);
+  const n = s.t.length, fs = n === 1 ? 10 : n === 2 ? 7.8 : 6.8;
+  return `<path fill="${s.c}" d="M1.5 .5h9l4 4v11h-13z"/><path fill="${mix(s.c, "#ffffff", 0.45)}" d="M10.5 .5v4h4z"/>` +
+    T(8, 10.6, fs, s.fg, s.t, n === 3 ? 12.4 : 0);
+}
+function iconD(ext, th) {
+  const s = spec(ext);
+  if (!s) return common(ext, th) || page(th);
+  const bg = `<rect x="0" y="8" width="16" height="8" rx="1" fill="${s.c}"/>`;
+  if (s.t.length === 1 || !/^[0-9A-Z]+$/.test(s.t)) return page(th) + bg + T(8, 12.2, 8, s.fg, s.t, 0);
+  return page(th) + bg + pixelText(s.t, 10, s.fg);
+}
+const V = { A: iconA, B: iconB, C: iconC, D: iconD };
+const svg = (body, px) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"${px ? ` width="${px}" height="${px}"` : ""}>${body}</svg>`;
+
+/* ---------- comparison table ---------- */
+const CMP = ["php", "code-workspace", "sln", "js", "ts", "py", "html", "css", "scss", "svelte", "json", "xml", "yml", "ps1", "bat", "sql", "rs", "go", "cs", "md", "txt", "pdf", "docx", "xlsx", "pptx", "ttf"];
+let scale = 1, theme = "dark", variant = "B";
+const MAG = 4;
+
+function raster(body, canvas) {
+  const px = Math.round(16 * scale);
+  canvas.width = canvas.height = px;
+  canvas.style.width = canvas.style.height = 16 * MAG + "px";
+  const img = new Image();
+  img.onload = () => { const g = canvas.getContext("2d"); g.clearRect(0, 0, px, px); g.drawImage(img, 0, 0, px, px); };
+  img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg(body, px));
+}
+
+function drawTable() {
+  const t = document.getElementById("cmp");
+  t.className = "cmp " + theme;
+  const th = TH[theme];
+  let h = `<tr><th></th>${Object.keys(V).map((v) => `<th>${v}<small>${{ A: "obecne", B: "duża plakietka", C: "kafelek", D: "pikselowa" }[v]}</small></th>`).join("")}</tr>`;
+  for (const e of CMP) {
+    h += `<tr><td class="e">.${e}</td>`;
+    for (const v of Object.keys(V)) h += `<td><span class="cell"><span style="background:var(--cbg);padding:3px;border-radius:2px;display:inline-flex">${svg(V[v](e, th))}</span><canvas data-v="${v}" data-e="${e}"></canvas></span></td>`;
+    h += "</tr>";
+  }
+  t.innerHTML = h;
+  t.querySelectorAll("canvas").forEach((c) => raster(V[c.dataset.v](c.dataset.e, th), c));
+}
+
+/* ---------- file list ---------- */
+const FILES = ["[..]", "[src]", "[vendor]", "index.php", "config.php", "Twinyard.code-workspace", "Twinyard.sln", "main.ts", "app.js", "App.svelte", "styles.css", "theme.scss", "index.html", "package.json", "composer.lock", "pom.xml", "ci.yml", "build.ps1", "deploy.bat", "schema.sql", "main.rs", "server.go", "script.py", "README.md", "notes.txt", "report.pdf", "Oferta.docx", "Budżet.xlsx", "logo.png", "backup.zip", "setup.exe", "data.sqlite"];
+function drawList() {
+  for (const [id, thn] of [["ld", "dark"], ["ll", "light"]]) {
+    const th = TH[thn];
+    document.getElementById(id).innerHTML = FILES.map((f, i) => {
+      const dir = f.startsWith("[");
+      const name = dir ? f.slice(1, -1) : f;
+      const e = dir ? "" : extOf(f);
+      const base = dir || !e ? name : name.slice(0, -(e.length + 1));
+      const ic = svg(dir ? FOLDER : V[variant](e, th));
+      return `<div class="row${dir ? " dir" : ""}${i === 3 ? " cursor" : ""}"><span class="nm">${ic}<span>${base}</span></span><span class="e">${e.length > 5 ? e.slice(0, 5) + "…" : e}</span><span class="r">${dir ? "&lt;DIR&gt;" : ((i * 37) % 90 + 1) + " k"}</span></div>`;
+    }).join("");
+  }
+}
+
+/* ---------- swatches ---------- */
+document.getElementById("sw").innerHTML = Object.entries(C).map(([e, [c]]) => `<span class="sw"><i style="background:${c}"></i>.${e}</span>`).join("");
+
+/* ---------- controls ---------- */
+function seg(id, fn) {
+  const el = document.getElementById(id);
+  el.addEventListener("click", (ev) => {
+    const b = ev.target.closest("button"); if (!b) return;
+    el.querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b));
+    fn(b.dataset);
+  });
+}
+seg("scale", (d) => { scale = +d.s; drawTable(); });
+seg("theme", (d) => { theme = d.t; drawTable(); });
+seg("variant", (d) => { variant = d.v; drawList(); });
+drawTable();
+drawList();
+</script>
+</body></html>
