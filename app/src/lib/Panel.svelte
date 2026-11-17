@@ -171,6 +171,20 @@
     return () => (stale = true);
   });
 
+  /** Root of the current location (drive, UNC share or FTP server) and the top-level folder to focus there. */
+  const rootTarget = $derived.by(() => {
+    const p = panel.path;
+    let m = /^(ftp:\/\/[^/]+\/)([^/]*)/i.exec(p);
+    if (m) return { root: m[1], first: m[2] };
+    m = /^(\\\\[^\\]+\\[^\\]+\\?)([^\\]*)/.exec(p);
+    if (m) return { root: m[1], first: m[2] };
+    m = /^([a-z]:\\?)([^\\]*)/i.exec(p);
+    if (m) return { root: m[1].length === 2 ? m[1] + "\\" : m[1], first: m[2] };
+    return null;
+  });
+  function goRoot() {
+    if (rootTarget?.first) void panel.navigate(rootTarget.root, rootTarget.first);
+  }
   const currentDrive = $derived(panel.path.length >= 2 && panel.path[1] === ":" ? panel.path[0].toUpperCase() : "");
 
   const cols: { key: SortKey; label: string }[] = $derived([
@@ -337,6 +351,7 @@
     {/if}
     <span class="spacer"></span>
     {#if panel.loading}<span class="spinner" title={t("Wczytywanie…")}></span>{/if}
+    <button class="drive root" title={t("Katalog główny dysku")} disabled={!rootTarget?.first} onclick={goRoot} tabindex="-1">\</button>
     <span class="view-mode">
       <button class="drive" class:current={!side.brief} title={t("Widok pełny (Ctrl+F1)")} onclick={() => (side.brief = false)} tabindex="-1">
         <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4h12M2 8h12M2 12h12" /></svg>
@@ -570,10 +585,20 @@
     font-weight: 700;
     letter-spacing: 0.04em;
   }
+  .drive.root {
+    margin-left: 6px;
+    font-weight: 700;
+  }
+  .drive.root:disabled {
+    opacity: 0.35;
+    background: transparent;
+    color: var(--fg-dim);
+    cursor: default;
+  }
   .view-mode {
     display: flex;
     gap: 2px;
-    margin-left: 6px;
+    margin-left: 10px;
   }
   .view-mode .drive {
     min-width: 0;

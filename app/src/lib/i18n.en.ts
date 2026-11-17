@@ -404,6 +404,7 @@ export const EN: Record<string, string> = {
   "Sortuj: nazwa / rozszerzenie / data / rozmiar": "Sort: name / extension / date / size",
   "Widok skrócony (same nazwy w kolumnach) / pełny; w skróconym ← → skacze o kolumnę": "Brief view (names only, in columns) / full; in brief ← → jump a column",
   "Widok pełny (Ctrl+F1)": "Full view (Ctrl+F1)",
+  "Katalog główny dysku": "Drive root",
   "Widok skrócony — same nazwy w kolumnach (Ctrl+F1)": "Brief view — names only, in columns (Ctrl+F1)",
   "Dolny pasek": "Bottom bar",
   "Pokaż przyciski F2–F8 na dole okna": "Show the F2–F8 buttons at the bottom of the window",
