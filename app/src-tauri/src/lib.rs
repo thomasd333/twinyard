@@ -8,6 +8,7 @@ mod ftp;
 pub mod housekeeping;
 mod jobs;
 mod search;
+mod shellicon;
 mod watch;
 mod winstate;
 
@@ -479,6 +480,7 @@ pub fn run() {
             extras::dir_size,
             extras::dir_size_cancel,
             extras::dir_size_progress,
+            shellicon::file_icons,
             extras::clipboard_set_files,
             extras::clipboard_set_text,
             extras::clipboard_get_files,

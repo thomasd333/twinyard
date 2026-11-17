@@ -408,6 +408,9 @@ interop -- --ignored`).
 - ✅ Ctrl+Q = okno z rozmiarem i liczbą plików / katalogów zaznaczonych (albo spod kursora); pokazuje
   się od razu z paskiem postępu i licznikami na żywo (`dir_size_progress`, odpytywane co 150 ms);
   „Przerwij” zostawia niepełne liczby, Esc zamyka. Wyniki trafiają też do kolumny rozmiaru.
+- ✅ Własne ikony plików z Eksploratora dla exe/lnk/ico/url/scr/cpl/msc (`shellicon.rs`:
+  IShellItemImageFactory → PNG data URL; `shellIcons.svelte.ts`: tylko widoczne wiersze, paczki po 64,
+  cache po ścieżce + dacie). Reszta typów, FTP i archiwa — wbudowane ikony.
 - ✅ Przy otwartym podglądzie F3 / porównywarce ✕ okna (i Alt+F4) zamyka najpierw je, nie program
   (ich ✕ leży tuż pod ✕ okna).
 - ✅ Num + / Num − = (od)znacz maską (pliki; `*\` = katalogi), Ctrl+Num − = odznacz wszystko, Ctrl+A bez zmian.

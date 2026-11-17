@@ -172,6 +172,8 @@ export const api = {
   dirSizeCancel: () => call<void>("dir_size_cancel"),
   /** Counted so far by the running dirSize. */
   dirSizeProgress: () => call<{ bytes: number; files: number; dirs: number }>("dir_size_progress"),
+  /** Explorer's icons of local files (PNG data URLs; null = none). `size` in device pixels. */
+  fileIcons: (paths: string[], size: number) => call<(string | null)[]>("file_icons", { paths, size }),
   clipboardSetFiles: (paths: string[], cut: boolean) => call<void>("clipboard_set_files", { paths, cut }),
   clipboardSetText: (text: string) => call<void>("clipboard_set_text", { text }),
   clipboardGetFiles: () => call<{ paths: string[]; cut: boolean } | null>("clipboard_get_files"),

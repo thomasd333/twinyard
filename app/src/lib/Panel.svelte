@@ -2,6 +2,7 @@
   import { api, joinPath, type Drive } from "./api";
   import { formatBytes, formatDate, formatHuman, splitExt } from "./format";
   import { FOLDER_SVG, fileIconSvg } from "./fileIcons";
+  import { hasOwnIcon, shellIcon } from "./shellIcons.svelte";
   import { t } from "./i18n.svelte";
   import { PARENT, type Side, type SortKey } from "./panelState.svelte";
 
@@ -471,7 +472,7 @@
             tabindex="-1"
           >
             <span class="col col-name">
-              <span class="icon" aria-hidden="true">{#if i === PARENT}↰{:else if dir}{@html FOLDER_SVG}{:else}{@html fileIconSvg(l.names[i])}{/if}</span>
+              <span class="icon" aria-hidden="true">{#if i === PARENT}↰{:else if dir}{@html FOLDER_SVG}{:else}{@const own = hasOwnIcon(l.names[i]) ? shellIcon(joinPath(panel.path, l.names[i]), l.mtimes[i]) : null}{#if own}<img src={own} alt="" draggable="false" />{:else}{@html fileIconSvg(l.names[i])}{/if}{/if}</span>
               <span class="name">{brief ? (i === PARENT ? ".." : l.names[i]) : stem}</span>
             </span>
             {#if !brief}
@@ -886,7 +887,8 @@
     justify-content: center;
     color: var(--list-dim);
   }
-  .icon :global(svg) {
+  .icon :global(svg),
+  .icon img {
     width: 16px;
     height: 16px;
   }
