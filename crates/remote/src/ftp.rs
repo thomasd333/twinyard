@@ -357,6 +357,12 @@ pub struct Entry {
 
 impl Entry {
     fn parse(line: &str, mlsd: bool) -> Option<Entry> {
+        // MLSD "type=cdir"/"type=pdir" = the listed dir and its parent; some
+        // servers name them with a full path instead of "."/"..", so they
+        // showed up as fake folders like "/WWW/site/css".
+        if mlsd && is_cdir_pdir(line) {
+            return None;
+        }
         let f = if mlsd {
             // "type=OS.unix=slink:/target" / "OS.unix=symlink" (ProFTPD, Pure-FTPd):
             // suppaftp refuses them, so such links vanished from the panel and
@@ -365,6 +371,10 @@ impl Entry {
         } else {
             ListParser::parse_posix(line).or_else(|_| ListParser::parse_dos(line)).ok()?
         };
+        // A real entry name never contains a slash.
+        if f.name().contains('/') {
+            return None;
+        }
         let mtime = f.modified().duration_since(UNIX_EPOCH).map(|d| d.as_millis() as i64).unwrap_or(0);
         // Symlinks on hostings are mostly dirs (www -> public_html); entering a
         // file link just fails, transfers try both.
@@ -376,6 +386,14 @@ impl Entry {
             mtime,
         })
     }
+}
+
+fn is_cdir_pdir(line: &str) -> bool {
+    let facts = line.split_once(' ').map_or(line, |(f, _)| f);
+    facts.split(';').any(|f| {
+        let l = f.trim().to_ascii_lowercase();
+        l == "type=cdir" || l == "type=pdir"
+    })
 }
 
 /// An MLSD line with a Unix link type rewritten to the standard `type=link`.
@@ -435,6 +453,9 @@ mod tests {
         assert!(m.dir && m.link && m.name == "www");
         let m = Entry::parse("type=OS.unix=symlink;modify=20240102030405; www2", true).unwrap();
         assert!(m.link && m.name == "www2");
+        assert!(Entry::parse("type=cdir;modify=20240102030405; /WWW/site/css", true).is_none());
+        assert!(Entry::parse("Type=pdir;modify=20240102030405; /WWW/site", true).is_none());
+        assert!(Entry::parse("type=dir;modify=20240102030405; /WWW/site", true).is_none());
     }
 }
 
