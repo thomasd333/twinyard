@@ -37,7 +37,7 @@ Press **F1** in the app for the full list of keyboard shortcuts.
 
 ## Download
 
-Get `twinyard-0.9.1-portable.zip` from [Releases](../../releases), unpack it anywhere and run
+Get `twinyard-0.9.2-portable.zip` from [Releases](../../releases), unpack it anywhere and run
 `twinyard.exe`. You need the WebView2 runtime, which is built into Windows 11 and present on
 most Windows 10 installations.
 
