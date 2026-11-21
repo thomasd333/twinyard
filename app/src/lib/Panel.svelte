@@ -364,7 +364,9 @@
   </header>
 
   {#if side.tabs.length > 1}
-    <div class="tabs">
+    <!-- double-click on the empty part of the strip = Ctrl+T in this panel -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div class="tabs" ondblclick={(e) => e.target === e.currentTarget && side.newTab()}>
       {#each side.tabs as tab, i (tab)}
         <div
           class="tab"
