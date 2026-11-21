@@ -287,6 +287,17 @@
       }
     });
     drives = await api.listDrives();
+    // Pick up plugged/unplugged drives (USB, mapped shares) like TC does: the
+    // listing is cheap and never touches the drives, so a short poll is fine.
+    let drivesKey = JSON.stringify(drives);
+    setInterval(async () => {
+      const next = await api.listDrives().catch(() => null);
+      const key = JSON.stringify(next);
+      if (next && key !== drivesKey) {
+        drivesKey = key;
+        drives = next;
+      }
+    }, 2000);
     const home = await api.homeDir();
     await Promise.all([restoreSide(sides[0], "side0", home), restoreSide(sides[1], "side1", "C:\\")]);
     restored = true;
